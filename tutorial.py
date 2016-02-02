@@ -91,25 +91,21 @@ class Object:
         self.blocks = blocks
         self.always_visible = always_visible
         self.fighter = fighter
-        if self.fighter:  #let the fighter component know who owns it
-            self.fighter.owner = self
+        self._ensure_ownership(fighter)
  
         self.ai = ai
-        if self.ai:  #let the AI component know who owns it
-            self.ai.owner = self
+        self._ensure_ownership(ai)
  
         self.item = item
-        if self.item:  #let the Item component know who owns it
-            self.item.owner = self
+        self._ensure_ownership(item)
  
         self.equipment = equipment
-        if self.equipment:  #let the Equipment component know who owns it
-            self.equipment.owner = self
+        self._ensure_ownership(equipment)
  
-            #there must be an Item component for the Equipment component to work properly
-            self.item = Item()
-            self.item.owner = self
- 
+    def _ensure_ownership(self, component):
+        if (component):
+            component.set_owner(self)
+
     def move(self, dx, dy):
         #move by the given amount, if the destination is not blocked
         if not is_blocked(self.x + dx, self.y + dy):
@@ -148,6 +144,9 @@ class Fighter:
         self.base_power = power
         self.xp = xp
         self.death_function = death_function
+
+    def set_owner(self, entity):
+        self.owner = entity
  
     @property
     def power(self):  #return actual power, by summing up the bonuses from all equipped items
@@ -196,6 +195,9 @@ class Fighter:
             self.hp = self.max_hp
  
 class BasicMonster:
+    def set_owner(self, entity):
+        self.owner = entity
+ 
     #AI for a basic monster.
     def take_turn(self):
         #a basic monster takes its turn. if you can see it, it can see you
@@ -215,7 +217,10 @@ class ConfusedMonster:
     def __init__(self, old_ai, num_turns=CONFUSE_NUM_TURNS):
         self.old_ai = old_ai
         self.num_turns = num_turns
- 
+
+    def set_owner(self, entity):
+        self.owner = entity
+  
     def take_turn(self):
         if self.num_turns > 0:  #still confused...
             #move in a random direction, and decrease the number of turns confused
@@ -230,6 +235,9 @@ class Item:
     #an item that can be picked up and used.
     def __init__(self, use_function=None):
         self.use_function = use_function
+ 
+    def set_owner(self, entity):
+        self.owner = entity
  
     def pick_up(self):
         #add to the player's inventory and remove from the map
@@ -279,6 +287,13 @@ class Equipment:
  
         self.slot = slot
         self.is_equipped = False
+ 
+    def set_owner(self, entity):
+        self.owner = entity
+
+        #there must be an Item component for the Equipment component to work properly
+        self.item = Item()
+        self.item.owner = self
  
     def toggle_equip(self):  #toggle equip/dequip status
         if self.is_equipped:
@@ -874,6 +889,7 @@ def monster_death(monster):
     monster.fighter = None
     monster.ai = None
     monster.name = 'remains of ' + monster.name
+    objects.remove(monster)
     objects.insert(0, monster)
  
 def target_tile(max_range=None):
