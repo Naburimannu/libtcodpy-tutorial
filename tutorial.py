@@ -138,24 +138,6 @@ class Object:
         #return the distance to some coordinates
         return math.sqrt((x - self.x) ** 2 + (y - self.y) ** 2)
  
-    def send_to_back(self):
-        #make this object be drawn first, so all others appear above it if they're in the same tile.
-        global objects
-        objects.remove(self)
-        objects.insert(0, self)
- 
-    def draw(self):
-        #only show if it's visible to the player; or it's set to "always visible" and on an explored tile
-        if (libtcod.map_is_in_fov(fov_map, self.x, self.y) or
-                (self.always_visible and map[self.x][self.y].explored)):
-            #set the color and then draw the character that represents this object at its position
-            libtcod.console_set_default_foreground(con, self.color)
-            libtcod.console_put_char(con, self.x, self.y, self.char, libtcod.BKGND_NONE)
- 
-    def clear(self):
-        #erase the character that represents this object
-        libtcod.console_put_char(con, self.x, self.y, ' ', libtcod.BKGND_NONE)
- 
  
 class Fighter:
     #combat-related properties and methods (monster, player, NPC).
@@ -443,8 +425,7 @@ def make_map():
  
     #create stairs at the center of the last room
     stairs = Object(new_x, new_y, '<', 'stairs', libtcod.white, always_visible=True)
-    objects.append(stairs)
-    stairs.send_to_back()  #so it's drawn below the monsters
+    objects.insert(0, stairs)
  
 def random_choice_index(chances):  #choose one option from list of chances, returning its index
     #the dice will land on some number between 1 and the sum of the chances
@@ -569,8 +550,7 @@ def place_objects(room):
                 equipment_component = Equipment(slot='left hand', defense_bonus=1)
                 item = Object(x, y, '[', 'shield', libtcod.darker_orange, equipment=equipment_component)
  
-            objects.append(item)
-            item.send_to_back()  #items appear below other objects
+            objects.insert(0, item)
             item.always_visible = True  #items are visible even out-of-FOV, if in an explored area
  
  
@@ -605,6 +585,19 @@ def get_names_under_mouse():
     names = ', '.join(names)  #join the names, separated by commas
     return names.capitalize()
  
+def draw_object(o):
+    #only show if it's visible to the player; or it's set to "always visible" and on an explored tile
+    if (libtcod.map_is_in_fov(fov_map, o.x, o.y) or
+            (o.always_visible and map[o.x][o.y].explored)):
+        #set the color and then draw the character that represents this object at its position
+        libtcod.console_set_default_foreground(con, o.color)
+        libtcod.console_put_char(con, o.x, o.y, o.char, libtcod.BKGND_NONE)
+
+ 
+def clear_object(o):
+    #erase the character that represents this object
+    libtcod.console_put_char(con, o.x, o.y, ' ', libtcod.BKGND_NONE)
+
 def render_all():
     global fov_map, color_dark_wall, color_light_wall
     global color_dark_ground, color_light_ground
@@ -640,8 +633,8 @@ def render_all():
     #always appear over all other objects! so it's drawn later.
     for object in objects:
         if object != player:
-            object.draw()
-    player.draw()
+            draw_object(object)
+    draw_object(player)
  
     #blit the contents of "con" to the root console
     libtcod.console_blit(con, 0, 0, MAP_WIDTH, MAP_HEIGHT, 0, 0, 0)
@@ -881,7 +874,7 @@ def monster_death(monster):
     monster.fighter = None
     monster.ai = None
     monster.name = 'remains of ' + monster.name
-    monster.send_to_back()
+    objects.insert(0, monster)
  
 def target_tile(max_range=None):
     global key, mouse
@@ -1077,7 +1070,7 @@ def play_game():
  
         #erase all objects at their old locations, before they move
         for object in objects:
-            object.clear()
+            clear_object(object)
  
         #handle keys and exit game if needed
         player_action = handle_keys()
