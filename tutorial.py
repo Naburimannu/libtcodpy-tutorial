@@ -8,6 +8,7 @@ import math
 import textwrap
 import shelve
  
+from Tile import Tile
  
 #actual size of the window
 SCREEN_WIDTH = 80
@@ -59,18 +60,6 @@ color_light_wall = libtcod.Color(130, 110, 50)
 color_dark_ground = libtcod.Color(50, 50, 150)
 color_light_ground = libtcod.Color(200, 180, 50)
  
- 
-class Tile:
-    #a tile of the map and its properties
-    def __init__(self, blocked, block_sight = None):
-        self.blocked = blocked
- 
-        #all tiles start unexplored
-        self.explored = False
- 
-        #by default, if a tile is blocked, it also blocks sight
-        if block_sight is None: block_sight = blocked
-        self.block_sight = block_sight
  
 class Rect:
     #a rectangle on the map. used to characterize a room.
