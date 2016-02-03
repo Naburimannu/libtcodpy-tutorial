@@ -91,7 +91,9 @@ def move_towards(o, target_x, target_y):
     move(o, dx, dy)
  
 class Fighter:
-    #combat-related properties and methods (monster, player, NPC).
+    """
+    Combat-related properties and methods (monster, player, NPC).
+    """
     def __init__(self, hp, defense, power, xp, death_function=None):
         self.base_max_hp = hp
         self.hp = hp
@@ -104,50 +106,54 @@ class Fighter:
         self.owner = entity
  
     @property
-    def power(self):  #return actual power, by summing up the bonuses from all equipped items
+    def power(self):
         bonus = sum(equipment.power_bonus for equipment in get_all_equipped(self.owner))
         return self.base_power + bonus
  
     @property
-    def defense(self):  #return actual defense, by summing up the bonuses from all equipped items
+    def defense(self):
         bonus = sum(equipment.defense_bonus for equipment in get_all_equipped(self.owner))
         return self.base_defense + bonus
  
     @property
-    def max_hp(self):  #return actual max_hp, by summing up the bonuses from all equipped items
+    def max_hp(self):
         bonus = sum(equipment.max_hp_bonus for equipment in get_all_equipped(self.owner))
         return self.base_max_hp + bonus
  
-    def attack(self, target):
-        #a simple formula for attack damage
-        damage = self.power - target.fighter.defense
+def attack(fighter, target):
+    """
+    A simple formula for attack damage.
+    """
+    damage = fighter.power - target.fighter.defense
  
-        if damage > 0:
-            #make the target take some damage
-            message(self.owner.name.capitalize() + ' attacks ' + target.name + ' for ' + str(damage) + ' hit points.')
-            target.fighter.take_damage(damage)
-        else:
-            message(self.owner.name.capitalize() + ' attacks ' + target.name + ' but it has no effect!')
+    if damage > 0:
+        message(fighter.owner.name.capitalize() + ' attacks ' + target.name + ' for ' + str(damage) + ' hit points.')
+        take_damage(target.fighter, damage)
+    else:
+        message(fighter.owner.name.capitalize() + ' attacks ' + target.name + ' but it has no effect!')
  
-    def take_damage(self, damage):
-        #apply damage if possible
-        if damage > 0:
-            self.hp -= damage
+def take_damage(fighter, damage):
+    """
+    Apply damage.
+    """
+    if damage > 0:
+        fighter.hp -= damage
  
-            #check for death. if there's a death function, call it
-            if self.hp <= 0:
-                function = self.death_function
-                if function is not None:
-                    function(self.owner)
+        if fighter.hp <= 0:
+            function = fighter.death_function
+            if function is not None:
+                function(fighter.owner)
  
-                if self.owner != player:  #yield experience to the player
-                    player.fighter.xp += self.xp
+            if fighter.owner != player:
+                player.fighter.xp += fighter.xp
  
-    def heal(self, amount):
-        #heal by the given amount, without going over the maximum
-        self.hp += amount
-        if self.hp > self.max_hp:
-            self.hp = self.max_hp
+def heal(fighter, amount):
+    """
+    Heal by the given amount, without going over the maximum.
+    """
+    fighter.hp += amount
+    if fighter.hp > fighter.max_hp:
+        fighter.hp = fighter.max_hp
  
 class BasicMonster:
     def set_owner(self, entity):
@@ -165,7 +171,7 @@ class BasicMonster:
  
             #close enough, attack! (if the player is still alive.)
             elif player.fighter.hp > 0:
-                monster.fighter.attack(player)
+                attack(monster.fighter, player)
  
 class ConfusedMonster:
     #AI for a temporarily confused monster (reverts to previous AI after a while).
@@ -551,7 +557,7 @@ def player_move_or_attack(dx, dy):
  
     #attack if target found, move otherwise
     if target is not None:
-        player.fighter.attack(target)
+        attack(player.fighter, target)
     else:
         move(player, dx, dy)
         fov_needs_recompute = True
@@ -694,10 +700,12 @@ def monster_death(monster):
     objects.insert(0, monster)
  
 def target_tile(max_range=None):
+    """
+    Return the position of a tile left-clicked in player's FOV (optionally in a range), or (None,None) if right-clicked.
+    """
     global key, mouse, fov_needs_recompute
-    #return the position of a tile left-clicked in player's FOV (optionally in a range), or (None,None) if right-clicked.
     while True:
-        #render the screen. this erases the inventory and shows the names of objects under the mouse.
+        # Render the screen. This erases the inventory and shows the names of objects under the mouse.
         libtcod.console_flush()
         libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, key, mouse)
         render_all(fov_needs_recompute, fov_map, map, objects, player, dungeon_level, game_msgs, mouse)
@@ -706,7 +714,7 @@ def target_tile(max_range=None):
         (x, y) = (mouse.cx, mouse.cy)
  
         if mouse.rbutton_pressed or key.vk == libtcod.KEY_ESCAPE:
-            return (None, None)  #cancel if the player right-clicked or pressed Escape
+            return (None, None)
  
         #accept the target if the player clicked in FOV, and in case a range is specified, if it's in that range
         if (mouse.lbutton_pressed and libtcod.map_is_in_fov(fov_map, x, y) and
@@ -746,7 +754,7 @@ def cast_heal():
         return 'cancelled'
  
     message('Your wounds start to feel better!', libtcod.light_violet)
-    player.fighter.heal(HEAL_AMOUNT)
+    heal(player.fighter, HEAL_AMOUNT)
  
 def cast_lightning():
     #find closest enemy (inside a maximum range) and damage it
@@ -758,7 +766,7 @@ def cast_lightning():
     #zap it!
     message('A lighting bolt strikes the ' + monster.name + ' with a loud thunder! The damage is '
             + str(LIGHTNING_DAMAGE) + ' hit points.', libtcod.light_blue)
-    monster.fighter.take_damage(LIGHTNING_DAMAGE)
+    take_damage(monster.fighter, LIGHTNING_DAMAGE)
  
 def cast_fireball():
     #ask the player for a target tile to throw a fireball at
@@ -770,7 +778,7 @@ def cast_fireball():
     for obj in objects:  #damage every fighter in range, including the player
         if obj.distance(x, y) <= FIREBALL_RADIUS and obj.fighter:
             message('The ' + obj.name + ' gets burned for ' + str(FIREBALL_DAMAGE) + ' hit points.', libtcod.orange)
-            obj.fighter.take_damage(FIREBALL_DAMAGE)
+            take_damage(obj.fighter, FIREBALL_DAMAGE)
  
 def cast_confuse():
     #ask the player for a target to confuse
@@ -849,7 +857,7 @@ def next_level():
     #advance to the next level
     global dungeon_level
     message('You take a moment to rest, and recover your strength.', libtcod.light_violet)
-    player.fighter.heal(player.fighter.max_hp / 2)  #heal the player by 50%
+    heal(player.fighter, player.fighter.max_hp / 2)  #heal the player by 50%
  
     dungeon_level += 1
     message('After a rare moment of peace, you descend deeper into the heart of the dungeon...', libtcod.red)
@@ -875,7 +883,7 @@ def play_game():
  
     mouse = libtcod.Mouse()
     key = libtcod.Key()
-    #main loop
+
     while not libtcod.console_is_window_closed():
         libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, key, mouse)
         render_all(fov_needs_recompute, fov_map, map, objects, player, dungeon_level, game_msgs, mouse)
@@ -883,7 +891,6 @@ def play_game():
 
         libtcod.console_flush()
  
-        #level up if needed
         check_level_up()
  
         #erase all objects at their old locations, before they move
@@ -896,7 +903,6 @@ def play_game():
             save_game()
             break
  
-        #let monsters take their turn
         if game_state == 'playing' and player_action != 'didnt-take-turn':
             for object in objects:
                 if object.ai:
@@ -909,19 +915,17 @@ def main_menu():
         #show the background image, at twice the regular console resolution
         libtcod.image_blit_2x(img, 0, 0, 0)
  
-        #show the game's title, and some credits!
         libtcod.console_set_default_foreground(0, libtcod.light_yellow)
         libtcod.console_print_ex(0, SCREEN_WIDTH/2, SCREEN_HEIGHT/2-4, libtcod.BKGND_NONE, libtcod.CENTER,
                                  'TOMBS OF THE ANCIENT KINGS')
         libtcod.console_print_ex(0, SCREEN_WIDTH/2, SCREEN_HEIGHT-2, libtcod.BKGND_NONE, libtcod.CENTER, 'By Jotaf')
  
-        #show options and wait for the player's choice
         choice = menu('', ['Play a new game', 'Continue last game', 'Quit'], 24)
  
-        if choice == 0:  #new game
+        if choice == 0:
             new_game()
             play_game()
-        if choice == 1:  #load last game
+        if choice == 1:
             try:
                 load_game()
             except:
@@ -932,5 +936,4 @@ def main_menu():
             break
  
 renderer_init()
- 
 main_menu()
