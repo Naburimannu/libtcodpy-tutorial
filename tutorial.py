@@ -9,7 +9,7 @@ import textwrap
 import shelve
  
 import config
-from Tile import Tile
+import map
 from components import *
 import renderer
 
@@ -277,48 +277,43 @@ def get_all_equipped(obj):
  
 def is_blocked(x, y):
     #first test the map tile
-    if map[x][y].blocked:
+    if current_map.tiles[x][y].blocked:
         return True
  
     #now check for any blocking objects
-    for object in objects:
+    for object in current_map.objects:
         if object.blocks and object.x == x and object.y == y:
             return True
  
     return False
  
 def create_room(room):
-    global map
+    global current_map
     #go through the tiles in the rectangle and make them passable
     for x in range(room.x1 + 1, room.x2):
         for y in range(room.y1 + 1, room.y2):
-            map[x][y].blocked = False
-            map[x][y].block_sight = False
+            current_map.tiles[x][y].blocked = False
+            current_map.tiles[x][y].block_sight = False
  
 def create_h_tunnel(x1, x2, y):
-    global map
+    global current_map
     #horizontal tunnel. min() and max() are used in case x1>x2
     for x in range(min(x1, x2), max(x1, x2) + 1):
-        map[x][y].blocked = False
-        map[x][y].block_sight = False
+        current_map.tiles[x][y].blocked = False
+        current_map.tiles[x][y].block_sight = False
  
 def create_v_tunnel(y1, y2, x):
-    global map
+    global current_map
     #vertical tunnel
     for y in range(min(y1, y2), max(y1, y2) + 1):
-        map[x][y].blocked = False
-        map[x][y].block_sight = False
+        current_map.tiles[x][y].blocked = False
+        current_map.tiles[x][y].block_sight = False
  
 def make_map():
-    global map, objects, stairs
+    global current_map
  
-    #the list of objects with just the player
-    objects = [player]
- 
-    #fill map with "blocked" tiles
-    map = [[ Tile(True)
-             for y in range(config.MAP_HEIGHT) ]
-           for x in range(config.MAP_WIDTH) ]
+    current_map = map.Map(config.MAP_HEIGHT, config.MAP_WIDTH)
+    current_map.objects.append(player)
  
     rooms = []
     num_rooms = 0
@@ -328,8 +323,8 @@ def make_map():
         w = libtcod.random_get_int(0, ROOM_MIN_SIZE, ROOM_MAX_SIZE)
         h = libtcod.random_get_int(0, ROOM_MIN_SIZE, ROOM_MAX_SIZE)
         #random position without going out of the boundaries of the map
-        x = libtcod.random_get_int(0, 0, config.MAP_WIDTH - w - 1)
-        y = libtcod.random_get_int(0, 0, config.MAP_HEIGHT - h - 1)
+        x = libtcod.random_get_int(0, 0, current_map.width - w - 1)
+        y = libtcod.random_get_int(0, 0, current_map.height - h - 1)
  
         #"Rect" class makes rectangles easier to work with
         new_room = Rect(x, y, w, h)
@@ -379,8 +374,8 @@ def make_map():
             num_rooms += 1
  
     #create stairs at the center of the last room
-    stairs = Object(new_x, new_y, '<', 'stairs', libtcod.white, always_visible=True)
-    objects.insert(0, stairs)
+    current_map.stairs = Object(new_x, new_y, '<', 'stairs', libtcod.white, always_visible=True)
+    current_map.objects.insert(0, current_map.stairs)
  
 def random_choice_index(chances):  #choose one option from list of chances, returning its index
     #the dice will land on some number between 1 and the sum of the chances
@@ -462,7 +457,7 @@ def place_objects(room):
                 monster = Object(x, y, 'T', 'troll', libtcod.darker_green,
                                  blocks=True, fighter=fighter_component, ai=ai_component)
  
-            objects.append(monster)
+            current_map.objects.append(monster)
  
     #choose random number of items
     num_items = libtcod.random_get_int(0, 0, max_items)
@@ -505,7 +500,7 @@ def place_objects(room):
                 equipment_component = Equipment(slot='left hand', defense_bonus=1)
                 item = Object(x, y, '[', 'shield', libtcod.darker_orange, equipment=equipment_component)
  
-            objects.insert(0, item)
+            current_map.objects.insert(0, item)
             item.always_visible = True  #items are visible even out-of-FOV, if in an explored area
  
  
@@ -532,7 +527,7 @@ def player_move_or_attack(dx, dy):
  
     #try to find an attackable object there
     target = None
-    for object in objects:
+    for object in current_map.objects:
         if object.fighter and object.x == x and object.y == y:
             target = object
             break
@@ -602,34 +597,34 @@ def handle_keys():
             key_char = chr(key.c)
  
             if key_char == 'g':
-                #pick up an item
-                for object in objects:  #look for an item in the player's tile
+                # pick up an item
+                for object in current_map.objects:  #look for an item in the player's tile
                     if object.x == player.x and object.y == player.y and object.item:
-                        pick_up(object, objects, player.inventory)
+                        pick_up(object, current_map.objects, player.inventory)
                         break
  
             if key_char == 'i':
-                #show the inventory; if an item is selected, use it
+                # show the inventory; if an item is selected, use it
                 chosen_item = inventory_menu('Press the key next to an item to use it, or any other to cancel.\n')
                 if chosen_item is not None:
                     use(chosen_item.owner)
  
             if key_char == 'd':
-                #show the inventory; if an item is selected, drop it
+                # show the inventory; if an item is selected, drop it
                 chosen_item = inventory_menu('Press the key next to an item to drop it, or any other to cancel.\n')
                 if chosen_item is not None:
-                    drop(chosen_item.owner, player.inventory, objects)
+                    drop(chosen_item.owner, player.inventory, current_map.objects)
  
             if key_char == 'c':
-                #show character information
+                # show character information
                 level_up_xp = LEVEL_UP_BASE + player.level * LEVEL_UP_FACTOR
                 msgbox('Character Information\n\nLevel: ' + str(player.level) + '\nExperience: ' + str(player.fighter.xp) +
                        '\nExperience to level up: ' + str(level_up_xp) + '\n\nMaximum HP: ' + str(player.fighter.max_hp) +
                        '\nAttack: ' + str(player.fighter.power) + '\nDefense: ' + str(player.fighter.defense), CHARACTER_SCREEN_WIDTH)
  
             if key_char == '<':
-                #go down stairs, if the player is on them
-                if stairs.x == player.x and stairs.y == player.y:
+                # go down stairs, if the player is on them
+                if current_map.stairs.x == player.x and current_map.stairs.y == player.y:
                     next_level()
  
             return 'didnt-take-turn'
@@ -678,8 +673,8 @@ def monster_death(monster):
     monster.fighter = None
     monster.ai = None
     monster.name = 'remains of ' + monster.name
-    objects.remove(monster)
-    objects.insert(0, monster)
+    current_map.objects.remove(monster)
+    current_map.objects.insert(0, monster)
  
 def target_tile(max_range=None):
     """
@@ -690,7 +685,7 @@ def target_tile(max_range=None):
         # Render the screen. This erases the inventory and shows the names of objects under the mouse.
         libtcod.console_flush()
         libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, key, mouse)
-        renderer.render_all(fov_needs_recompute, fov_map, map, objects, player, dungeon_level, game_msgs, mouse)
+        renderer.render_all(fov_needs_recompute, fov_map, current_map, player, dungeon_level, game_msgs, mouse)
         fov_needs_recompute = False
  
         (x, y) = (mouse.cx, mouse.cy)
@@ -711,7 +706,7 @@ def target_monster(max_range=None):
             return None
  
         #return the first clicked monster, otherwise continue looping
-        for obj in objects:
+        for obj in current_map.objects:
             if obj.x == x and obj.y == y and obj.fighter and obj != player:
                 return obj
  
@@ -720,7 +715,7 @@ def closest_monster(max_range):
     closest_enemy = None
     closest_dist = max_range + 1  #start with (slightly more than) maximum range
  
-    for object in objects:
+    for object in current_map.objects:
         if object.fighter and not object == player and libtcod.map_is_in_fov(fov_map, object.x, object.y):
             #calculate distance between this object and the player
             dist = player.distance_to(object)
@@ -757,7 +752,7 @@ def cast_fireball():
     if x is None: return 'cancelled'
     message('The fireball explodes, burning everything within ' + str(FIREBALL_RADIUS) + ' tiles!', libtcod.orange)
  
-    for obj in objects:  #damage every fighter in range, including the player
+    for obj in current_map.objects:  #damage every fighter in range, including the player
         if obj.distance(x, y) <= FIREBALL_RADIUS and obj.fighter:
             message('The ' + obj.name + ' gets burned for ' + str(FIREBALL_DAMAGE) + ' hit points.', libtcod.orange)
             take_damage(obj.fighter, FIREBALL_DAMAGE)
@@ -776,26 +771,24 @@ def cast_confuse():
  
  
 def save_game():
-    #open a new empty shelve (possibly overwriting an old one) to write the game data
+    global current_map, player, game_msgs, game_state, dungeon_level
+    """
+    Overwrites any existing data.
+    """
     file = shelve.open('savegame', 'n')
-    file['map'] = map
-    file['objects'] = objects
-    file['player_index'] = objects.index(player)  #index of player in objects list
-    file['stairs_index'] = objects.index(stairs)  #same for the stairs
+    file['current_map'] = current_map
+    file['player_index'] = current_map.objects.index(player)  #index of player in objects list
     file['game_msgs'] = game_msgs
     file['game_state'] = game_state
     file['dungeon_level'] = dungeon_level
     file.close()
  
 def load_game():
-    #open the previously saved shelve and load the game data
-    global map, objects, player, stairs, game_msgs, game_state, dungeon_level
+    global current_map, player, stairs, game_msgs, game_state, dungeon_level
  
     file = shelve.open('savegame', 'r')
-    map = file['map']
-    objects = file['objects']
-    player = objects[file['player_index']]  #get index of player in objects list and access it
-    stairs = objects[file['stairs_index']]  #same for the stairs
+    current_map = file['current_map']
+    player = current_map.objects[file['player_index']]  #get index of player in objects list and access it
     game_msgs = file['game_msgs']
     game_state = file['game_state']
     dungeon_level = file['dungeon_level']
@@ -847,14 +840,14 @@ def next_level():
     initialize_fov()
  
 def initialize_fov():
-    global fov_needs_recompute, fov_map
+    global fov_needs_recompute, fov_map, current_map
     fov_needs_recompute = True
  
     #create the FOV map, according to the generated map
-    fov_map = libtcod.map_new(config.MAP_WIDTH, config.MAP_HEIGHT)
-    for y in range(config.MAP_HEIGHT):
-        for x in range(config.MAP_WIDTH):
-            libtcod.map_set_properties(fov_map, x, y, not map[x][y].block_sight, not map[x][y].blocked)
+    fov_map = libtcod.map_new(current_map.width, current_map.height)
+    for y in range(current_map.height):
+        for x in range(current_map.width):
+            libtcod.map_set_properties(fov_map, x, y, not current_map.tiles[x][y].block_sight, not current_map.tiles[x][y].blocked)
  
     renderer.clear_console()  #unexplored areas start black (which is the default background color)
  
@@ -868,7 +861,7 @@ def play_game():
 
     while not libtcod.console_is_window_closed():
         libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, key, mouse)
-        renderer.render_all(fov_needs_recompute, fov_map, map, objects, player, dungeon_level, game_msgs, mouse)
+        renderer.render_all(fov_needs_recompute, fov_map, current_map, player, dungeon_level, game_msgs, mouse)
         fov_needs_recompute = False
 
         libtcod.console_flush()
@@ -876,7 +869,7 @@ def play_game():
         check_level_up()
  
         #erase all objects at their old locations, before they move
-        for object in objects:
+        for object in current_map.objects:
             renderer.clear_object(object)
  
         #handle keys and exit game if needed
@@ -886,7 +879,7 @@ def play_game():
             break
  
         if game_state == 'playing' and player_action != 'didnt-take-turn':
-            for object in objects:
+            for object in current_map.objects:
                 if object.ai:
                     object.ai.take_turn()
  

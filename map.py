@@ -1,3 +1,4 @@
+
 class Tile(object):
     """
     A tile of the map and its properties.
@@ -28,4 +29,15 @@ class Tile(object):
     # Python 2.7 on Windows?
     __slots__ = ['blocked', 'explored', 'block_sight']
 
+class Map(object):
+    def __init__(self, height, width):
+        self.height = height
+        self.width = width
+        self.objects = []
+        # Default to blocked tiles.
+        self.tiles = [[ Tile(True)
+                 for y in range(height) ]
+               for x in range(width) ]
+        # TODO: do stairs get cloned when saved?
+        self.stairs = None
 
