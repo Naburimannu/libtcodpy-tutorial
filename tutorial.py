@@ -148,7 +148,7 @@ class BasicMonster(Component):
     def take_turn(self):
         #a basic monster takes its turn. if you can see it, it can see you
         monster = self.owner
-        if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
+        if libtcod.map_is_in_fov(current_map.fov_map, monster.x, monster.y):
  
             #move towards player if far away
             if monster.distance_to(player) >= 2:
@@ -311,6 +311,7 @@ def create_v_tunnel(y1, y2, x):
  
 def make_map():
     global current_map
+    renderer.clear_console()  #unexplored areas start black (which is the default background color)
  
     current_map = map.Map(config.MAP_HEIGHT, config.MAP_WIDTH)
     current_map.objects.append(player)
@@ -376,6 +377,8 @@ def make_map():
     #create stairs at the center of the last room
     current_map.stairs = Object(new_x, new_y, '<', 'stairs', libtcod.white, always_visible=True)
     current_map.objects.insert(0, current_map.stairs)
+
+    current_map.initialize_fov()
  
 def random_choice_index(chances):  #choose one option from list of chances, returning its index
     #the dice will land on some number between 1 and the sum of the chances
@@ -519,7 +522,7 @@ def message(new_msg, color = libtcod.white):
  
  
 def player_move_or_attack(dx, dy):
-    global fov_needs_recompute
+    global current_map
  
     #the coordinates the player is moving to/attacking
     x = player.x + dx
@@ -537,7 +540,7 @@ def player_move_or_attack(dx, dy):
         attack(player.fighter, target)
     else:
         move(player, dx, dy)
-        fov_needs_recompute = True
+        current_map.fov_needs_recompute = True
  
 
 def inventory_menu(header):
@@ -680,13 +683,13 @@ def target_tile(max_range=None):
     """
     Return the position of a tile left-clicked in player's FOV (optionally in a range), or (None,None) if right-clicked.
     """
-    global key, mouse, fov_needs_recompute
+    global key, mouse, current_map
     while True:
         # Render the screen. This erases the inventory and shows the names of objects under the mouse.
         libtcod.console_flush()
         libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, key, mouse)
-        renderer.render_all(fov_needs_recompute, fov_map, current_map, player, dungeon_level, game_msgs, mouse)
-        fov_needs_recompute = False
+        renderer.render_all(current_map, player, dungeon_level, game_msgs, mouse)
+        current_map.fov_needs_recompute = False
  
         (x, y) = (mouse.cx, mouse.cy)
  
@@ -694,7 +697,7 @@ def target_tile(max_range=None):
             return (None, None)
  
         #accept the target if the player clicked in FOV, and in case a range is specified, if it's in that range
-        if (mouse.lbutton_pressed and libtcod.map_is_in_fov(fov_map, x, y) and
+        if (mouse.lbutton_pressed and libtcod.map_is_in_fov(current_map.fov_map, x, y) and
                 (max_range is None or player.distance(x, y) <= max_range)):
             return (x, y)
  
@@ -716,7 +719,7 @@ def closest_monster(max_range):
     closest_dist = max_range + 1  #start with (slightly more than) maximum range
  
     for object in current_map.objects:
-        if object.fighter and not object == player and libtcod.map_is_in_fov(fov_map, object.x, object.y):
+        if object.fighter and not object == player and libtcod.map_is_in_fov(current_map.fov_map, object.x, object.y):
             #calculate distance between this object and the player
             dist = player.distance_to(object)
             if dist < closest_dist:  #it's closer, so remember it
@@ -794,7 +797,7 @@ def load_game():
     dungeon_level = file['dungeon_level']
     file.close()
  
-    initialize_fov()
+    current_map.initialize_fov()
  
 def new_game():
     global player, game_msgs, game_state, dungeon_level
@@ -808,7 +811,6 @@ def new_game():
     #generate map (at this point it's not drawn to the screen)
     dungeon_level = 1
     make_map()
-    initialize_fov()
  
     game_state = 'playing'
     player.inventory = []
@@ -837,22 +839,10 @@ def next_level():
     dungeon_level += 1
     message('After a rare moment of peace, you descend deeper into the heart of the dungeon...', libtcod.red)
     make_map()
-    initialize_fov()
  
-def initialize_fov():
-    global fov_needs_recompute, fov_map, current_map
-    fov_needs_recompute = True
- 
-    #create the FOV map, according to the generated map
-    fov_map = libtcod.map_new(current_map.width, current_map.height)
-    for y in range(current_map.height):
-        for x in range(current_map.width):
-            libtcod.map_set_properties(fov_map, x, y, not current_map.tiles[x][y].block_sight, not current_map.tiles[x][y].blocked)
- 
-    renderer.clear_console()  #unexplored areas start black (which is the default background color)
  
 def play_game():
-    global key, mouse, fov_needs_recompute
+    global key, mouse, current_map
  
     player_action = None
  
@@ -861,8 +851,8 @@ def play_game():
 
     while not libtcod.console_is_window_closed():
         libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, key, mouse)
-        renderer.render_all(fov_needs_recompute, fov_map, current_map, player, dungeon_level, game_msgs, mouse)
-        fov_needs_recompute = False
+        renderer.render_all(current_map, player, dungeon_level, game_msgs, mouse)
+        current_map.fov_needs_recompute = False
 
         libtcod.console_flush()
  

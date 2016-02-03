@@ -1,3 +1,4 @@
+import libtcodpy as libtcod # for field of view management
 
 class Tile(object):
     """
@@ -40,4 +41,13 @@ class Map(object):
                for x in range(width) ]
         # TODO: do stairs get cloned when saved?
         self.stairs = None
+        self.fov_map = None
 
+    def initialize_fov(self):
+        # After being loaded from savegame, we need to make sure the C state
+        # is reinitialized, so we can't just set this in __init__().
+        self.fov_needs_recompute = True
+        self.fov_map = libtcod.map_new(self.width, self.height)
+        for y in range(self.height):
+            for x in range(self.width):
+                libtcod.map_set_properties(self.fov_map, x, y, not self.tiles[x][y].block_sight, not self.tiles[x][y].blocked)

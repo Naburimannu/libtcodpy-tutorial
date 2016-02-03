@@ -150,18 +150,18 @@ def menu(header, options, width):
     if index >= 0 and index < len(options): return index
     return None
  
-def render_all(fov_recompute, fov_map, current_map, player, dungeon_level, game_msgs, mouse):
+def render_all(current_map, player, dungeon_level, game_msgs, mouse):
     global color_dark_wall, color_light_wall
     global color_dark_ground, color_light_ground
  
-    if fov_recompute:
+    if current_map.fov_needs_recompute:
         #recompute FOV if needed (the player moved or something)
-        libtcod.map_compute_fov(fov_map, player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO)
+        libtcod.map_compute_fov(current_map.fov_map, player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO)
  
         #go through all tiles, and set their background color according to the FOV
         for y in range(current_map.height):
             for x in range(current_map.width):
-                visible = libtcod.map_is_in_fov(fov_map, x, y)
+                visible = libtcod.map_is_in_fov(current_map.fov_map, x, y)
                 wall = current_map.tiles[x][y].block_sight
                 if not visible:
                     #if it's not visible right now, the player can only see it if it's explored
@@ -171,7 +171,6 @@ def render_all(fov_recompute, fov_map, current_map, player, dungeon_level, game_
                         else:
                             libtcod.console_set_char_background(con, x, y, color_dark_ground, libtcod.BKGND_SET)
                 else:
-                    #it's visible
                     if wall:
                         libtcod.console_set_char_background(con, x, y, color_light_wall, libtcod.BKGND_SET )
                     else:
@@ -183,8 +182,8 @@ def render_all(fov_recompute, fov_map, current_map, player, dungeon_level, game_
     #always appear over all other objects! so it's drawn later.
     for object in current_map.objects:
         if object != player:
-            _draw_object(object, current_map.tiles, fov_map)
-    _draw_object(player, current_map.tiles, fov_map)
+            _draw_object(object, current_map.tiles, current_map.fov_map)
+    _draw_object(player, current_map.tiles, current_map.fov_map)
  
     #blit the contents of "con" to the root console
     libtcod.console_blit(con, 0, 0, config.MAP_WIDTH, config.MAP_HEIGHT, 0, 0, 0)
@@ -208,7 +207,7 @@ def render_all(fov_recompute, fov_map, current_map, player, dungeon_level, game_
  
     #display names of objects under the mouse
     libtcod.console_set_default_foreground(panel, libtcod.light_gray)
-    libtcod.console_print_ex(panel, 1, 0, libtcod.BKGND_NONE, libtcod.LEFT, _get_names_under_mouse(current_map.objects, fov_map, mouse))
+    libtcod.console_print_ex(panel, 1, 0, libtcod.BKGND_NONE, libtcod.LEFT, _get_names_under_mouse(current_map.objects, current_map.fov_map, mouse))
  
     #blit the contents of "panel" to the root console
     libtcod.console_blit(panel, 0, 0, config.SCREEN_WIDTH, config.PANEL_HEIGHT, 0, 0, PANEL_Y)
