@@ -536,7 +536,7 @@ def message(new_msg, color = libtcod.white):
  
  
 def player_move_or_attack(dx, dy):
-    global fov_recompute
+    global fov_needs_recompute
  
     #the coordinates the player is moving to/attacking
     x = player.x + dx
@@ -554,7 +554,7 @@ def player_move_or_attack(dx, dy):
         player.fighter.attack(target)
     else:
         move(player, dx, dy)
-        fov_recompute = True
+        fov_needs_recompute = True
  
 
 def inventory_menu(header):
@@ -694,13 +694,14 @@ def monster_death(monster):
     objects.insert(0, monster)
  
 def target_tile(max_range=None):
-    global key, mouse
+    global key, mouse, fov_needs_recompute
     #return the position of a tile left-clicked in player's FOV (optionally in a range), or (None,None) if right-clicked.
     while True:
         #render the screen. this erases the inventory and shows the names of objects under the mouse.
         libtcod.console_flush()
         libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, key, mouse)
-        render_all(fov_recompute, fov_map, map, objects, player, dungeon_level, game_msgs, mouse)
+        render_all(fov_needs_recompute, fov_map, map, objects, player, dungeon_level, game_msgs, mouse)
+        fov_needs_recompute = False
  
         (x, y) = (mouse.cx, mouse.cy)
  
@@ -856,8 +857,8 @@ def next_level():
     initialize_fov()
  
 def initialize_fov():
-    global fov_recompute, fov_map
-    fov_recompute = True
+    global fov_needs_recompute, fov_map
+    fov_needs_recompute = True
  
     #create the FOV map, according to the generated map
     fov_map = libtcod.map_new(MAP_WIDTH, MAP_HEIGHT)
@@ -868,7 +869,7 @@ def initialize_fov():
     clear_console()  #unexplored areas start black (which is the default background color)
  
 def play_game():
-    global key, mouse
+    global key, mouse, fov_needs_recompute
  
     player_action = None
  
@@ -877,8 +878,9 @@ def play_game():
     #main loop
     while not libtcod.console_is_window_closed():
         libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, key, mouse)
-        render_all(fov_recompute, fov_map, map, objects, player, dungeon_level, game_msgs, mouse)
- 
+        render_all(fov_needs_recompute, fov_map, map, objects, player, dungeon_level, game_msgs, mouse)
+        fov_needs_recompute = False
+
         libtcod.console_flush()
  
         #level up if needed

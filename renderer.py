@@ -139,7 +139,6 @@ def render_all(fov_recompute, fov_map, map, objects, player, dungeon_level, game
  
     if fov_recompute:
         #recompute FOV if needed (the player moved or something)
-        fov_recompute = False
         libtcod.map_compute_fov(fov_map, player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO)
  
         #go through all tiles, and set their background color according to the FOV
