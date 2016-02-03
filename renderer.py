@@ -1,5 +1,6 @@
 import libtcodpy as libtcod
 
+import config
 
 color_dark_wall = libtcod.Color(0, 0, 100)
 color_light_wall = libtcod.Color(130, 110, 50)
@@ -10,21 +11,9 @@ FOV_ALGO = 0  #default FOV algorithm
 FOV_LIGHT_WALLS = True  #light walls or not
 TORCH_RADIUS = 10
 
-#actual size of the window
-SCREEN_WIDTH = 80
-SCREEN_HEIGHT = 50
-
-#size of the map
-MAP_WIDTH = 80
-MAP_HEIGHT = 43
-
 #sizes and coordinates relevant for the GUI
-BAR_WIDTH = 20
-PANEL_HEIGHT = 7
-PANEL_Y = SCREEN_HEIGHT - PANEL_HEIGHT
-MSG_X = BAR_WIDTH + 2
-MSG_WIDTH = SCREEN_WIDTH - BAR_WIDTH - 2
-MSG_HEIGHT = PANEL_HEIGHT - 1
+PANEL_Y = config.SCREEN_HEIGHT - config.PANEL_HEIGHT
+MSG_X = config.BAR_WIDTH + 2
 
 LIMIT_FPS = 20  #20 frames-per-second maximum
 
@@ -34,10 +23,38 @@ def renderer_init():
     """
     global con, panel
     libtcod.console_set_custom_font('arial10x10.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
-    libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'python/libtcod tutorial', False)
+    libtcod.console_init_root(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, 'python/libtcod tutorial', False)
     libtcod.sys_set_fps(LIMIT_FPS)
-    con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
-    panel = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT)
+    con = libtcod.console_new(config.MAP_WIDTH, config.MAP_HEIGHT)
+    panel = libtcod.console_new(config.SCREEN_WIDTH, config.PANEL_HEIGHT)
+
+
+def main_menu(new_game, play_game, load_game):
+    img = libtcod.image_load('menu_background.png')
+ 
+    while not libtcod.console_is_window_closed():
+        #show the background image, at twice the regular console resolution
+        libtcod.image_blit_2x(img, 0, 0, 0)
+ 
+        libtcod.console_set_default_foreground(0, libtcod.light_yellow)
+        libtcod.console_print_ex(0, config.SCREEN_WIDTH/2, config.SCREEN_HEIGHT/2-4, libtcod.BKGND_NONE, libtcod.CENTER,
+                                 'TOMBS OF THE ANCIENT KINGS')
+        libtcod.console_print_ex(0, config.SCREEN_WIDTH/2, config.SCREEN_HEIGHT-2, libtcod.BKGND_NONE, libtcod.CENTER, 'By Jotaf')
+ 
+        choice = menu('', ['Play a new game', 'Continue last game', 'Quit'], 24)
+ 
+        if choice == 0:
+            new_game()
+            play_game()
+        if choice == 1:
+            try:
+                load_game()
+            except:
+                msgbox('\n No saved game to load.\n', 24)
+                continue
+            play_game()
+        elif choice == 2:  #quit
+            break
 
 def clear_console():
     libtcod.console_clear(con)
@@ -95,7 +112,7 @@ def menu(header, options, width):
     if len(options) > 26: raise ValueError('Cannot have a menu with more than 26 options.')
  
     #calculate total height for the header (after auto-wrap) and one line per option
-    header_height = libtcod.console_get_height_rect(con, 0, 0, width, SCREEN_HEIGHT, header)
+    header_height = libtcod.console_get_height_rect(con, 0, 0, width, config.SCREEN_HEIGHT, header)
     if header == '':
         header_height = 0
     height = len(options) + header_height
@@ -117,8 +134,8 @@ def menu(header, options, width):
         letter_index += 1
  
     #blit the contents of "window" to the root console
-    x = SCREEN_WIDTH/2 - width/2
-    y = SCREEN_HEIGHT/2 - height/2
+    x = config.SCREEN_WIDTH/2 - width/2
+    y = config.SCREEN_HEIGHT/2 - height/2
     libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
  
     #present the root console to the player and wait for a key-press
@@ -142,8 +159,8 @@ def render_all(fov_recompute, fov_map, map, objects, player, dungeon_level, game
         libtcod.map_compute_fov(fov_map, player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO)
  
         #go through all tiles, and set their background color according to the FOV
-        for y in range(MAP_HEIGHT):
-            for x in range(MAP_WIDTH):
+        for y in range(config.MAP_HEIGHT):
+            for x in range(config.MAP_WIDTH):
                 visible = libtcod.map_is_in_fov(fov_map, x, y)
                 wall = map[x][y].block_sight
                 if not visible:
@@ -170,7 +187,7 @@ def render_all(fov_recompute, fov_map, map, objects, player, dungeon_level, game
     draw_object(player, map, fov_map)
  
     #blit the contents of "con" to the root console
-    libtcod.console_blit(con, 0, 0, MAP_WIDTH, MAP_HEIGHT, 0, 0, 0)
+    libtcod.console_blit(con, 0, 0, config.MAP_WIDTH, config.MAP_HEIGHT, 0, 0, 0)
  
  
     #prepare to render the GUI panel
@@ -185,7 +202,7 @@ def render_all(fov_recompute, fov_map, map, objects, player, dungeon_level, game
         y += 1
  
     #show the player's stats
-    render_bar(1, 1, BAR_WIDTH, 'HP', player.fighter.hp, player.fighter.max_hp,
+    render_bar(1, 1, config.BAR_WIDTH, 'HP', player.fighter.hp, player.fighter.max_hp,
                libtcod.light_red, libtcod.darker_red)
     libtcod.console_print_ex(panel, 1, 3, libtcod.BKGND_NONE, libtcod.LEFT, 'Dungeon level ' + str(dungeon_level))
  
@@ -194,5 +211,5 @@ def render_all(fov_recompute, fov_map, map, objects, player, dungeon_level, game
     libtcod.console_print_ex(panel, 1, 0, libtcod.BKGND_NONE, libtcod.LEFT, get_names_under_mouse(objects, fov_map, mouse))
  
     #blit the contents of "panel" to the root console
-    libtcod.console_blit(panel, 0, 0, SCREEN_WIDTH, PANEL_HEIGHT, 0, 0, PANEL_Y)
+    libtcod.console_blit(panel, 0, 0, config.SCREEN_WIDTH, config.PANEL_HEIGHT, 0, 0, PANEL_Y)
  

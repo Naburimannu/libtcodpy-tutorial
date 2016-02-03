@@ -10,20 +10,11 @@ import shelve
  
 from Tile import Tile
 from components import *
-from renderer import render_all, clear_object, clear_console, menu, renderer_init
- 
-#actual size of the window
-SCREEN_WIDTH = 80
-SCREEN_HEIGHT = 50
- 
-#size of the map
-MAP_WIDTH = 80
-MAP_HEIGHT = 43
+from renderer import render_all, clear_object, clear_console, menu, renderer_init, main_menu
+import config
 
-PANEL_HEIGHT = 7
-BAR_WIDTH = 20
-MSG_WIDTH = SCREEN_WIDTH - BAR_WIDTH - 2
-MSG_HEIGHT = PANEL_HEIGHT - 1
+MSG_WIDTH = config.SCREEN_WIDTH - config.BAR_WIDTH - 2
+MSG_HEIGHT = config.PANEL_HEIGHT - 1
 INVENTORY_WIDTH = 50
 CHARACTER_SCREEN_WIDTH = 30
 LEVEL_SCREEN_WIDTH = 40
@@ -335,8 +326,8 @@ def make_map():
  
     #fill map with "blocked" tiles
     map = [[ Tile(True)
-             for y in range(MAP_HEIGHT) ]
-           for x in range(MAP_WIDTH) ]
+             for y in range(config.MAP_HEIGHT) ]
+           for x in range(config.MAP_WIDTH) ]
  
     rooms = []
     num_rooms = 0
@@ -346,8 +337,8 @@ def make_map():
         w = libtcod.random_get_int(0, ROOM_MIN_SIZE, ROOM_MAX_SIZE)
         h = libtcod.random_get_int(0, ROOM_MIN_SIZE, ROOM_MAX_SIZE)
         #random position without going out of the boundaries of the map
-        x = libtcod.random_get_int(0, 0, MAP_WIDTH - w - 1)
-        y = libtcod.random_get_int(0, 0, MAP_HEIGHT - h - 1)
+        x = libtcod.random_get_int(0, 0, config.MAP_WIDTH - w - 1)
+        y = libtcod.random_get_int(0, 0, config.MAP_HEIGHT - h - 1)
  
         #"Rect" class makes rectangles easier to work with
         new_room = Rect(x, y, w, h)
@@ -869,9 +860,9 @@ def initialize_fov():
     fov_needs_recompute = True
  
     #create the FOV map, according to the generated map
-    fov_map = libtcod.map_new(MAP_WIDTH, MAP_HEIGHT)
-    for y in range(MAP_HEIGHT):
-        for x in range(MAP_WIDTH):
+    fov_map = libtcod.map_new(config.MAP_WIDTH, config.MAP_HEIGHT)
+    for y in range(config.MAP_HEIGHT):
+        for x in range(config.MAP_WIDTH):
             libtcod.map_set_properties(fov_map, x, y, not map[x][y].block_sight, not map[x][y].blocked)
  
     clear_console()  #unexplored areas start black (which is the default background color)
@@ -908,32 +899,6 @@ def play_game():
                 if object.ai:
                     object.ai.take_turn()
  
-def main_menu():
-    img = libtcod.image_load('menu_background.png')
- 
-    while not libtcod.console_is_window_closed():
-        #show the background image, at twice the regular console resolution
-        libtcod.image_blit_2x(img, 0, 0, 0)
- 
-        libtcod.console_set_default_foreground(0, libtcod.light_yellow)
-        libtcod.console_print_ex(0, SCREEN_WIDTH/2, SCREEN_HEIGHT/2-4, libtcod.BKGND_NONE, libtcod.CENTER,
-                                 'TOMBS OF THE ANCIENT KINGS')
-        libtcod.console_print_ex(0, SCREEN_WIDTH/2, SCREEN_HEIGHT-2, libtcod.BKGND_NONE, libtcod.CENTER, 'By Jotaf')
- 
-        choice = menu('', ['Play a new game', 'Continue last game', 'Quit'], 24)
- 
-        if choice == 0:
-            new_game()
-            play_game()
-        if choice == 1:
-            try:
-                load_game()
-            except:
-                msgbox('\n No saved game to load.\n', 24)
-                continue
-            play_game()
-        elif choice == 2:  #quit
-            break
  
 renderer_init()
-main_menu()
+main_menu(new_game, play_game, load_game)
