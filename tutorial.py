@@ -202,44 +202,45 @@ class Item:
     def set_owner(self, entity):
         self.owner = entity
  
-    def pick_up(self, from_container, to_container):
-        #add to the player's inventory and remove from the map
-        if len(to_container) >= 26:
-            message('Your inventory is full, cannot pick up ' + self.owner.name + '.', libtcod.red)
-        else:
-            to_container.append(self.owner)
-            from_container.remove(self.owner)
-            message('You picked up a ' + self.owner.name + '!', libtcod.green)
+
+def pick_up(o, from_container, to_container):
+    #add to the player's inventory and remove from the map
+    if len(to_container) >= 26:
+        message('Your inventory is full, cannot pick up ' + o.owner.name + '.', libtcod.red)
+    else:
+        to_container.append(o)
+        from_container.remove(o)
+        message('You picked up a ' + o.name + '!', libtcod.green)
  
-            #special case: automatically equip, if the corresponding equipment slot is unused
-            equipment = self.owner.equipment
-            if equipment and get_equipped_in_slot(equipment.slot) is None:
-                equipment.equip()
+        #special case: automatically equip, if the corresponding equipment slot is unused
+        equipment = o.equipment
+        if equipment and get_equipped_in_slot(equipment.slot) is None:
+            equip(equipment)
  
-    def drop(self, from_container, to_container):
-        #special case: if the object has the Equipment component, dequip it before dropping
-        if self.owner.equipment:
-            self.owner.equipment.dequip()
+def drop(o, from_container, to_container):
+    # Special case: if the object has the Equipment component, dequip it before dropping
+    if o.equipment:
+        dequip(o.equipment)
  
-        #add to the map and remove from the player's inventory. also, place it at the player's coordinates
-        to_container.append(self.owner)
-        from_container.remove(self.owner)
-        self.owner.x = player.x
-        self.owner.y = player.y
-        message('You dropped a ' + self.owner.name + '.', libtcod.yellow)
+    #add to the map and remove from the player's inventory. also, place it at the player's coordinates
+    to_container.append(o)
+    from_container.remove(o)
+    o.x = player.x
+    o.y = player.y
+    message('You dropped a ' + o.name + '.', libtcod.yellow)
  
-    def use(self):
-        #special case: if the object has the Equipment component, the "use" action is to equip/dequip
-        if self.owner.equipment:
-            self.owner.equipment.toggle_equip()
-            return
+def use(o):
+    #special case: if the object has the Equipment component, the "use" action is to equip/dequip
+    if o.equipment:
+        toggle_equip(o.equipment)
+        return
  
-        #just call the "use_function" if it is defined
-        if self.use_function is None:
-            message('The ' + self.owner.name + ' cannot be used.')
-        else:
-            if self.use_function() != 'cancelled':
-                inventory.remove(self.owner)  #destroy after use, unless it was cancelled for some reason
+    #just call the "use_function" if it is defined
+    if o.item.use_function is None:
+        message('The ' + o.name + ' cannot be used.')
+    else:
+        if o.item.use_function() != 'cancelled':
+            inventory.remove(o)  #destroy after use, unless it was cancelled for some reason
  
 class Equipment:
     #an object that can be equipped, yielding bonuses. automatically adds the Item component.
@@ -254,32 +255,34 @@ class Equipment:
     def set_owner(self, entity):
         self.owner = entity
 
-        #there must be an Item component for the Equipment component to work properly
-        self.item = Item()
-        self.item.owner = self
+        # There must be an Item component for the Equipment component to work properly.
+        entity.item = Item()
+        entity.item.set_owner(entity)
  
-    def toggle_equip(self):  #toggle equip/dequip status
-        if self.is_equipped:
-            self.dequip()
-        else:
-            self.equip()
+# takes Equipment
+def toggle_equip(eqp):  #toggle equip/dequip status
+    if eqp.is_equipped:
+        dequip(eqp)
+    else:
+        equip(eqp)
  
-    def equip(self):
-        #if the slot is already being used, dequip whatever is there first
-        old_equipment = get_equipped_in_slot(self.slot)
-        if old_equipment is not None:
-            old_equipment.dequip()
+# takes Equipment
+def equip(eqp):
+    #if the slot is already being used, dequip whatever is there first
+    old_equipment = get_equipped_in_slot(eqp.slot)
+    if old_equipment is not None:
+        dequip(old_equipment)
  
-        #equip object and show a message about it
-        self.is_equipped = True
-        message('Equipped ' + self.owner.name + ' on ' + self.slot + '.', libtcod.light_green)
+    #equip object and show a message about it
+    eqp.is_equipped = True
+    message('Equipped ' + eqp.owner.name + ' on ' + eqp.slot + '.', libtcod.light_green)
  
-    def dequip(self):
-        #dequip object and show a message about it
-        if not self.is_equipped: return
-        self.is_equipped = False
-        message('Dequipped ' + self.owner.name + ' from ' + self.slot + '.', libtcod.light_yellow)
- 
+# takes Equipment
+def dequip(eqp):
+    #dequip object and show a message about it
+    if not eqp.is_equipped: return
+    eqp.is_equipped = False
+    message('Dequipped ' + eqp.owner.name + ' from ' + eqp.slot + '.', libtcod.light_yellow)
  
 def get_equipped_in_slot(slot):  #returns the equipment in a slot, or None if it's empty
     for obj in inventory:
@@ -779,20 +782,20 @@ def handle_keys():
                 #pick up an item
                 for object in objects:  #look for an item in the player's tile
                     if object.x == player.x and object.y == player.y and object.item:
-                        object.item.pick_up(objects, inventory)
+                        pick_up(object, objects, inventory)
                         break
  
             if key_char == 'i':
                 #show the inventory; if an item is selected, use it
                 chosen_item = inventory_menu('Press the key next to an item to use it, or any other to cancel.\n')
                 if chosen_item is not None:
-                    chosen_item.use()
+                    use(chosen_item.owner)
  
             if key_char == 'd':
                 #show the inventory; if an item is selected, drop it
                 chosen_item = inventory_menu('Press the key next to an item to drop it, or any other to cancel.\n')
                 if chosen_item is not None:
-                    chosen_item.drop(inventory, objects)
+                    drop(chosen_item.owner, inventory, objects)
  
             if key_char == 'c':
                 #show character information
@@ -1003,7 +1006,7 @@ def new_game():
     equipment_component = Equipment(slot='right hand', power_bonus=2)
     obj = Object(0, 0, '-', 'dagger', libtcod.sky, equipment=equipment_component)
     inventory.append(obj)
-    equipment_component.equip()
+    equip(equipment_component)
     obj.always_visible = True
  
 def next_level():
