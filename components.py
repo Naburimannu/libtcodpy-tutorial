@@ -40,17 +40,21 @@ class Object:
         #return the distance to some coordinates
         return math.sqrt((x - self.x) ** 2 + (y - self.y) ** 2)
 
-class Item:
+class Component:
+    """
+    Base class for components to minimize boilerplate.
+    """
+    def set_owner(self, entity):
+        self.owner = entity
+
+class Item(Component):
     """
     An item that can be picked up and used.
     """
     def __init__(self, use_function=None):
         self.use_function = use_function
- 
-    def set_owner(self, entity):
-        self.owner = entity
- 
-class Equipment:
+  
+class Equipment(Component):
     """
     An object that can be equipped, yielding bonuses.
     Requires an Item component.
@@ -64,7 +68,7 @@ class Equipment:
         self.is_equipped = False
  
     def set_owner(self, entity):
-        self.owner = entity
+        Component.set_owner(self, entity)
 
         # There must be an Item component for the Equipment component to work properly.
         entity.item = Item()

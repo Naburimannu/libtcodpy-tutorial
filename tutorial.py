@@ -81,7 +81,7 @@ def move_towards(o, target_x, target_y):
     dy = int(round(dy / distance))
     move(o, dx, dy)
  
-class Fighter:
+class Fighter(Component):
     """
     Combat-related properties and methods (monster, player, NPC).
     """
@@ -92,9 +92,6 @@ class Fighter:
         self.base_power = power
         self.xp = xp
         self.death_function = death_function
-
-    def set_owner(self, entity):
-        self.owner = entity
  
     @property
     def power(self):
@@ -146,10 +143,7 @@ def heal(fighter, amount):
     if fighter.hp > fighter.max_hp:
         fighter.hp = fighter.max_hp
  
-class BasicMonster:
-    def set_owner(self, entity):
-        self.owner = entity
- 
+class BasicMonster(Component):
     #AI for a basic monster.
     def take_turn(self):
         #a basic monster takes its turn. if you can see it, it can see you
@@ -164,17 +158,14 @@ class BasicMonster:
             elif player.fighter.hp > 0:
                 attack(monster.fighter, player)
  
-class ConfusedMonster:
+class ConfusedMonster(Component):
     #AI for a temporarily confused monster (reverts to previous AI after a while).
     def __init__(self, old_ai, num_turns=CONFUSE_NUM_TURNS):
         self.old_ai = old_ai
         self.num_turns = num_turns
-
-    def set_owner(self, entity):
-        self.owner = entity
   
     def take_turn(self):
-        if self.num_turns > 0:  #still confused...
+        if self.num_turns > 0:
             #move in a random direction, and decrease the number of turns confused
             self.owner.move(libtcod.random_get_int(0, -1, 1), libtcod.random_get_int(0, -1, 1))
             self.num_turns -= 1
