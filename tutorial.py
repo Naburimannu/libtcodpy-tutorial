@@ -105,24 +105,6 @@ class Object:
     def _ensure_ownership(self, component):
         if (component):
             component.set_owner(self)
-
-    def move(self, dx, dy):
-        #move by the given amount, if the destination is not blocked
-        if not is_blocked(self.x + dx, self.y + dy):
-            self.x += dx
-            self.y += dy
- 
-    def move_towards(self, target_x, target_y):
-        #vector from this object to the target, and distance
-        dx = target_x - self.x
-        dy = target_y - self.y
-        distance = math.sqrt(dx ** 2 + dy ** 2)
- 
-        #normalize it to length 1 (preserving direction), then round it and
-        #convert to integer so the movement is restricted to the map grid
-        dx = int(round(dx / distance))
-        dy = int(round(dy / distance))
-        self.move(dx, dy)
  
     def distance_to(self, other):
         #return the distance to another object
@@ -134,6 +116,23 @@ class Object:
         #return the distance to some coordinates
         return math.sqrt((x - self.x) ** 2 + (y - self.y) ** 2)
  
+def move(o, dx, dy):
+    #move by the given amount, if the destination is not blocked
+    if not is_blocked(o.x + dx, o.y + dy):
+        o.x += dx
+        o.y += dy
+ 
+def move_towards(o, target_x, target_y):
+    #vector from this object to the target, and distance
+    dx = target_x - o.x
+    dy = target_y - o.y
+    distance = math.sqrt(dx ** 2 + dy ** 2)
+ 
+    #normalize it to length 1 (preserving direction), then round it and
+    #convert to integer so the movement is restricted to the map grid
+    dx = int(round(dx / distance))
+    dy = int(round(dy / distance))
+    move(o, dx, dy)
  
 class Fighter:
     #combat-related properties and methods (monster, player, NPC).
@@ -206,7 +205,7 @@ class BasicMonster:
  
             #move towards player if far away
             if monster.distance_to(player) >= 2:
-                monster.move_towards(player.x, player.y)
+                move_towards(monster, player.x, player.y)
  
             #close enough, attack! (if the player is still alive.)
             elif player.fighter.hp > 0:
@@ -710,7 +709,7 @@ def player_move_or_attack(dx, dy):
     if target is not None:
         player.fighter.attack(target)
     else:
-        player.move(dx, dy)
+        move(player, dx, dy)
         fov_recompute = True
  
  
