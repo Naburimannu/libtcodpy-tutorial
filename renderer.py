@@ -59,7 +59,7 @@ def main_menu(new_game, play_game, load_game):
 def clear_console():
     libtcod.console_clear(con)
 
-def render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
+def _render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
     #render a bar (HP, experience, etc). first calculate the width of the bar
     bar_width = int(float(value) / maximum * total_width)
  
@@ -79,7 +79,7 @@ def render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
  
 
 
-def get_names_under_mouse(objects, fov_map, mouse):
+def _get_names_under_mouse(objects, fov_map, mouse):
     #return a string with the names of all objects under the mouse
  
     (x, y) = (mouse.cx, mouse.cy)
@@ -91,7 +91,7 @@ def get_names_under_mouse(objects, fov_map, mouse):
     names = ', '.join(names)  #join the names, separated by commas
     return names.capitalize()
  
-def draw_object(o, map, fov_map):
+def _draw_object(o, map, fov_map):
     #only show if it's visible to the player; or it's set to "always visible" and on an explored tile
     if (libtcod.map_is_in_fov(fov_map, o.x, o.y) or
             (o.always_visible and map[o.x][o.y].explored)):
@@ -183,8 +183,8 @@ def render_all(fov_recompute, fov_map, map, objects, player, dungeon_level, game
     #always appear over all other objects! so it's drawn later.
     for object in objects:
         if object != player:
-            draw_object(object, map, fov_map)
-    draw_object(player, map, fov_map)
+            _draw_object(object, map, fov_map)
+    _draw_object(player, map, fov_map)
  
     #blit the contents of "con" to the root console
     libtcod.console_blit(con, 0, 0, config.MAP_WIDTH, config.MAP_HEIGHT, 0, 0, 0)
@@ -202,13 +202,13 @@ def render_all(fov_recompute, fov_map, map, objects, player, dungeon_level, game
         y += 1
  
     #show the player's stats
-    render_bar(1, 1, config.BAR_WIDTH, 'HP', player.fighter.hp, player.fighter.max_hp,
+    _render_bar(1, 1, config.BAR_WIDTH, 'HP', player.fighter.hp, player.fighter.max_hp,
                libtcod.light_red, libtcod.darker_red)
     libtcod.console_print_ex(panel, 1, 3, libtcod.BKGND_NONE, libtcod.LEFT, 'Dungeon level ' + str(dungeon_level))
  
     #display names of objects under the mouse
     libtcod.console_set_default_foreground(panel, libtcod.light_gray)
-    libtcod.console_print_ex(panel, 1, 0, libtcod.BKGND_NONE, libtcod.LEFT, get_names_under_mouse(objects, fov_map, mouse))
+    libtcod.console_print_ex(panel, 1, 0, libtcod.BKGND_NONE, libtcod.LEFT, _get_names_under_mouse(objects, fov_map, mouse))
  
     #blit the contents of "panel" to the root console
     libtcod.console_blit(panel, 0, 0, config.SCREEN_WIDTH, config.PANEL_HEIGHT, 0, 0, PANEL_Y)

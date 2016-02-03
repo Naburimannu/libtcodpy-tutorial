@@ -8,10 +8,10 @@ import math
 import textwrap
 import shelve
  
+import config
 from Tile import Tile
 from components import *
-from renderer import render_all, clear_object, clear_console, menu, renderer_init, main_menu
-import config
+import renderer
 
 MSG_WIDTH = config.SCREEN_WIDTH - config.BAR_WIDTH - 2
 MSG_HEIGHT = config.PANEL_HEIGHT - 1
@@ -567,14 +567,14 @@ def inventory_menu(header):
                 text = text + ' (on ' + item.equipment.slot + ')'
             options.append(text)
  
-    index = menu(header, options, INVENTORY_WIDTH)
+    index = renderer.menu(header, options, INVENTORY_WIDTH)
  
     #if an item was chosen, return it
     if index is None or len(inventory) == 0: return None
     return inventory[index].item
  
 def msgbox(text, width=50):
-    menu(text, [], width)  #use menu() as a sort of "message box"
+    renderer.menu(text, [], width)  #use menu() as a sort of "message box"
  
 def handle_keys():
     global key
@@ -654,7 +654,7 @@ def check_level_up():
  
         choice = None
         while choice == None:  #keep asking until a choice is made
-            choice = menu('Level up! Choose a stat to raise:\n',
+            choice = renderer.menu('Level up! Choose a stat to raise:\n',
                           ['Constitution (+20 HP, from ' + str(player.fighter.max_hp) + ')',
                            'Strength (+1 attack, from ' + str(player.fighter.power) + ')',
                            'Agility (+1 defense, from ' + str(player.fighter.defense) + ')'], LEVEL_SCREEN_WIDTH)
@@ -699,7 +699,7 @@ def target_tile(max_range=None):
         # Render the screen. This erases the inventory and shows the names of objects under the mouse.
         libtcod.console_flush()
         libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, key, mouse)
-        render_all(fov_needs_recompute, fov_map, map, objects, player, dungeon_level, game_msgs, mouse)
+        renderer.render_all(fov_needs_recompute, fov_map, map, objects, player, dungeon_level, game_msgs, mouse)
         fov_needs_recompute = False
  
         (x, y) = (mouse.cx, mouse.cy)
@@ -845,14 +845,16 @@ def new_game():
     obj.always_visible = True
  
 def next_level():
-    #advance to the next level
+    """
+    Advance to the next level.
+    """
     global dungeon_level
     message('You take a moment to rest, and recover your strength.', libtcod.light_violet)
     heal(player.fighter, player.fighter.max_hp / 2)  #heal the player by 50%
  
     dungeon_level += 1
     message('After a rare moment of peace, you descend deeper into the heart of the dungeon...', libtcod.red)
-    make_map()  #create a fresh new level!
+    make_map()
     initialize_fov()
  
 def initialize_fov():
@@ -865,7 +867,7 @@ def initialize_fov():
         for x in range(config.MAP_WIDTH):
             libtcod.map_set_properties(fov_map, x, y, not map[x][y].block_sight, not map[x][y].blocked)
  
-    clear_console()  #unexplored areas start black (which is the default background color)
+    renderer.clear_console()  #unexplored areas start black (which is the default background color)
  
 def play_game():
     global key, mouse, fov_needs_recompute
@@ -877,7 +879,7 @@ def play_game():
 
     while not libtcod.console_is_window_closed():
         libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, key, mouse)
-        render_all(fov_needs_recompute, fov_map, map, objects, player, dungeon_level, game_msgs, mouse)
+        renderer.render_all(fov_needs_recompute, fov_map, map, objects, player, dungeon_level, game_msgs, mouse)
         fov_needs_recompute = False
 
         libtcod.console_flush()
@@ -886,7 +888,7 @@ def play_game():
  
         #erase all objects at their old locations, before they move
         for object in objects:
-            clear_object(object)
+            renderer.clear_object(object)
  
         #handle keys and exit game if needed
         player_action = handle_keys()
@@ -900,5 +902,5 @@ def play_game():
                     object.ai.take_turn()
  
  
-renderer_init()
-main_menu(new_game, play_game, load_game)
+renderer.renderer_init()
+renderer.main_menu(new_game, play_game, load_game)
