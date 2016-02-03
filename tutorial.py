@@ -202,13 +202,13 @@ class Item:
     def set_owner(self, entity):
         self.owner = entity
  
-    def pick_up(self):
+    def pick_up(self, from_container, to_container):
         #add to the player's inventory and remove from the map
-        if len(inventory) >= 26:
+        if len(to_container) >= 26:
             message('Your inventory is full, cannot pick up ' + self.owner.name + '.', libtcod.red)
         else:
-            inventory.append(self.owner)
-            objects.remove(self.owner)
+            to_container.append(self.owner)
+            from_container.remove(self.owner)
             message('You picked up a ' + self.owner.name + '!', libtcod.green)
  
             #special case: automatically equip, if the corresponding equipment slot is unused
@@ -216,14 +216,14 @@ class Item:
             if equipment and get_equipped_in_slot(equipment.slot) is None:
                 equipment.equip()
  
-    def drop(self):
+    def drop(self, from_container, to_container):
         #special case: if the object has the Equipment component, dequip it before dropping
         if self.owner.equipment:
             self.owner.equipment.dequip()
  
         #add to the map and remove from the player's inventory. also, place it at the player's coordinates
-        objects.append(self.owner)
-        inventory.remove(self.owner)
+        to_container.append(self.owner)
+        from_container.remove(self.owner)
         self.owner.x = player.x
         self.owner.y = player.y
         message('You dropped a ' + self.owner.name + '.', libtcod.yellow)
@@ -779,7 +779,7 @@ def handle_keys():
                 #pick up an item
                 for object in objects:  #look for an item in the player's tile
                     if object.x == player.x and object.y == player.y and object.item:
-                        object.item.pick_up()
+                        object.item.pick_up(objects, inventory)
                         break
  
             if key_char == 'i':
@@ -792,7 +792,7 @@ def handle_keys():
                 #show the inventory; if an item is selected, drop it
                 chosen_item = inventory_menu('Press the key next to an item to drop it, or any other to cancel.\n')
                 if chosen_item is not None:
-                    chosen_item.drop()
+                    chosen_item.drop(inventory, objects)
  
             if key_char == 'c':
                 #show character information
