@@ -194,17 +194,12 @@ class ConfusedMonster:
             self.owner.ai = self.old_ai
             message('The ' + self.owner.name + ' is no longer confused!', libtcod.red)
  
-class Item:
-    #an item that can be picked up and used.
-    def __init__(self, use_function=None):
-        self.use_function = use_function
- 
-    def set_owner(self, entity):
-        self.owner = entity
- 
+
 
 def pick_up(o, from_container, to_container):
-    #add to the player's inventory and remove from the map
+    """
+    Add an Object to the player's inventory and remove from the map.
+    """
     if len(to_container) >= 26:
         message('Your inventory is full, cannot pick up ' + o.owner.name + '.', libtcod.red)
     else:
@@ -218,11 +213,14 @@ def pick_up(o, from_container, to_container):
             equip(equipment)
  
 def drop(o, from_container, to_container):
-    # Special case: if the object has the Equipment component, dequip it before dropping
+    """
+    Remove an Object from the player's inventory and add it to the map
+    at the player's coordinates.
+    If it's equipment, dequip before dropping.
+    """
     if o.equipment:
         dequip(o.equipment)
  
-    #add to the map and remove from the player's inventory. also, place it at the player's coordinates
     to_container.append(o)
     from_container.remove(o)
     o.x = player.x
@@ -230,37 +228,23 @@ def drop(o, from_container, to_container):
     message('You dropped a ' + o.name + '.', libtcod.yellow)
  
 def use(o):
-    #special case: if the object has the Equipment component, the "use" action is to equip/dequip
+    """
+    If the object has the Equipment component, toggle equip/dequip.
+    Otherwise invoke its use_function and destroy it.
+    """
     if o.equipment:
         toggle_equip(o.equipment)
         return
  
-    #just call the "use_function" if it is defined
     if o.item.use_function is None:
         message('The ' + o.name + ' cannot be used.')
     else:
         if o.item.use_function() != 'cancelled':
-            inventory.remove(o)  #destroy after use, unless it was cancelled for some reason
+            inventory.remove(o)
  
-class Equipment:
-    #an object that can be equipped, yielding bonuses. automatically adds the Item component.
-    def __init__(self, slot, power_bonus=0, defense_bonus=0, max_hp_bonus=0):
-        self.power_bonus = power_bonus
-        self.defense_bonus = defense_bonus
-        self.max_hp_bonus = max_hp_bonus
- 
-        self.slot = slot
-        self.is_equipped = False
- 
-    def set_owner(self, entity):
-        self.owner = entity
 
-        # There must be an Item component for the Equipment component to work properly.
-        entity.item = Item()
-        entity.item.set_owner(entity)
- 
 # takes Equipment
-def toggle_equip(eqp):  #toggle equip/dequip status
+def toggle_equip(eqp):
     if eqp.is_equipped:
         dequip(eqp)
     else:
@@ -268,29 +252,39 @@ def toggle_equip(eqp):  #toggle equip/dequip status
  
 # takes Equipment
 def equip(eqp):
-    #if the slot is already being used, dequip whatever is there first
+    """
+    Equip the object (and log).
+    Ensure only one object per slot.
+    """
     old_equipment = get_equipped_in_slot(eqp.slot)
     if old_equipment is not None:
         dequip(old_equipment)
  
-    #equip object and show a message about it
     eqp.is_equipped = True
     message('Equipped ' + eqp.owner.name + ' on ' + eqp.slot + '.', libtcod.light_green)
  
 # takes Equipment
 def dequip(eqp):
-    #dequip object and show a message about it
+    """
+    Dequip the object (and log).
+    """
     if not eqp.is_equipped: return
     eqp.is_equipped = False
     message('Dequipped ' + eqp.owner.name + ' from ' + eqp.slot + '.', libtcod.light_yellow)
  
-def get_equipped_in_slot(slot):  #returns the equipment in a slot, or None if it's empty
+def get_equipped_in_slot(slot):
+    """
+    Returns Equipment in a slot, or None.
+    """
     for obj in inventory:
         if obj.equipment and obj.equipment.slot == slot and obj.equipment.is_equipped:
             return obj.equipment
     return None
  
-def get_all_equipped(obj):  #returns a list of equipped items
+def get_all_equipped(obj):
+    """
+    Returns a list of all equipped items.
+    """
     if obj == player:
         equipped_list = []
         for item in inventory:
@@ -298,7 +292,7 @@ def get_all_equipped(obj):  #returns a list of equipped items
                 equipped_list.append(item.equipment)
         return equipped_list
     else:
-        return []  #other objects have no equipment
+        return []
  
  
 def is_blocked(x, y):
