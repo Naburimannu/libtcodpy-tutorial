@@ -220,7 +220,7 @@ def use(o):
         message('The ' + o.name + ' cannot be used.')
     else:
         if o.item.use_function() != 'cancelled':
-            inventory.remove(o)
+            player.inventory.remove(o)
  
 
 # takes Equipment
@@ -256,7 +256,7 @@ def get_equipped_in_slot(slot):
     """
     Returns Equipment in a slot, or None.
     """
-    for obj in inventory:
+    for obj in player.inventory:
         if obj.equipment and obj.equipment.slot == slot and obj.equipment.is_equipped:
             return obj.equipment
     return None
@@ -267,7 +267,7 @@ def get_all_equipped(obj):
     """
     if obj == player:
         equipped_list = []
-        for item in inventory:
+        for item in player.inventory:
             if item.equipment and item.equipment.is_equipped:
                 equipped_list.append(item.equipment)
         return equipped_list
@@ -547,11 +547,11 @@ def player_move_or_attack(dx, dy):
 
 def inventory_menu(header):
     #show a menu with each item of the inventory as an option
-    if len(inventory) == 0:
+    if len(player.inventory) == 0:
         options = ['Inventory is empty.']
     else:
         options = []
-        for item in inventory:
+        for item in player.inventory:
             text = item.name
             #show additional information, in case it's equipped
             if item.equipment and item.equipment.is_equipped:
@@ -561,8 +561,8 @@ def inventory_menu(header):
     index = renderer.menu(header, options, INVENTORY_WIDTH)
  
     #if an item was chosen, return it
-    if index is None or len(inventory) == 0: return None
-    return inventory[index].item
+    if index is None or len(player.inventory) == 0: return None
+    return player.inventory[index].item
  
 def msgbox(text, width=50):
     renderer.menu(text, [], width)  #use menu() as a sort of "message box"
@@ -605,7 +605,7 @@ def handle_keys():
                 #pick up an item
                 for object in objects:  #look for an item in the player's tile
                     if object.x == player.x and object.y == player.y and object.item:
-                        pick_up(object, objects, inventory)
+                        pick_up(object, objects, player.inventory)
                         break
  
             if key_char == 'i':
@@ -618,7 +618,7 @@ def handle_keys():
                 #show the inventory; if an item is selected, drop it
                 chosen_item = inventory_menu('Press the key next to an item to drop it, or any other to cancel.\n')
                 if chosen_item is not None:
-                    drop(chosen_item.owner, inventory, objects)
+                    drop(chosen_item.owner, player.inventory, objects)
  
             if key_char == 'c':
                 #show character information
@@ -782,7 +782,6 @@ def save_game():
     file['objects'] = objects
     file['player_index'] = objects.index(player)  #index of player in objects list
     file['stairs_index'] = objects.index(stairs)  #same for the stairs
-    file['inventory'] = inventory
     file['game_msgs'] = game_msgs
     file['game_state'] = game_state
     file['dungeon_level'] = dungeon_level
@@ -790,14 +789,13 @@ def save_game():
  
 def load_game():
     #open the previously saved shelve and load the game data
-    global map, objects, player, stairs, inventory, game_msgs, game_state, dungeon_level
+    global map, objects, player, stairs, game_msgs, game_state, dungeon_level
  
     file = shelve.open('savegame', 'r')
     map = file['map']
     objects = file['objects']
     player = objects[file['player_index']]  #get index of player in objects list and access it
     stairs = objects[file['stairs_index']]  #same for the stairs
-    inventory = file['inventory']
     game_msgs = file['game_msgs']
     game_state = file['game_state']
     dungeon_level = file['dungeon_level']
@@ -806,7 +804,7 @@ def load_game():
     initialize_fov()
  
 def new_game():
-    global player, inventory, game_msgs, game_state, dungeon_level
+    global player, game_msgs, game_state, dungeon_level
  
     #create object representing the player
     fighter_component = Fighter(hp=100, defense=1, power=2, xp=0, death_function=player_death)
@@ -820,7 +818,7 @@ def new_game():
     initialize_fov()
  
     game_state = 'playing'
-    inventory = []
+    player.inventory = []
  
     #create the list of game messages and their colors, starts empty
     game_msgs = []
@@ -831,7 +829,7 @@ def new_game():
     #initial equipment: a dagger
     equipment_component = Equipment(slot='right hand', power_bonus=2)
     obj = Object(0, 0, '-', 'dagger', libtcod.sky, equipment=equipment_component)
-    inventory.append(obj)
+    player.inventory.append(obj)
     equip(equipment_component)
     obj.always_visible = True
  
