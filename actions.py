@@ -5,6 +5,7 @@ import components
 
 def move(o, dx, dy):
     """
+    Moves object by (dx, dy).
     Returns true if move succeeded.
     """
     if not o.current_map.is_blocked(o.x + dx, o.y + dy):
@@ -14,15 +15,19 @@ def move(o, dx, dy):
     return False
  
 def move_towards(o, target_x, target_y):
+    """
+    Moves object one step towards target location.
+    Returns true if move succeeded.
+    """
     dx = target_x - o.x
     dy = target_y - o.y
     distance = math.sqrt(dx ** 2 + dy ** 2)
  
-    #normalize it to length 1 (preserving direction), then round it and
-    #convert to integer so the movement is restricted to the map grid
+    # Normalize to length 1 (preserving direction), then round and
+    # convert to integer so the movement is restricted to the map grid.
     dx = int(round(dx / distance))
     dy = int(round(dy / distance))
-    move(o, dx, dy)
+    return move(o, dx, dy)
  
 
 def attack(fighter, target):
