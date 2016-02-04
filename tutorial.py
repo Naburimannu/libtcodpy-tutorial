@@ -64,13 +64,16 @@ class Rect:
                 self.y1 <= other.y2 and self.y2 >= other.y1)
  
 def move(o, dx, dy):
-    #move by the given amount, if the destination is not blocked
+    """
+    Returns true if move succeeded.
+    """
     if not current_map.is_blocked(o.x + dx, o.y + dy):
         o.x += dx
         o.y += dy
+        return True
+    return False
  
 def move_towards(o, target_x, target_y):
-    #vector from this object to the target, and distance
     dx = target_x - o.x
     dy = target_y - o.y
     distance = math.sqrt(dx ** 2 + dy ** 2)
@@ -477,8 +480,8 @@ def player_move_or_attack(dx, dy):
     if target is not None:
         attack(player.fighter, target)
     else:
-        move(player, dx, dy)
-        current_map.fov_needs_recompute = True
+        if move(player, dx, dy):
+            current_map.fov_needs_recompute = True
  
 
 def inventory_menu(header):
