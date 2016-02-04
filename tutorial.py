@@ -116,11 +116,11 @@ def attack(fighter, target):
  
     if damage > 0:
         message(fighter.owner.name.capitalize() + ' attacks ' + target.name + ' for ' + str(damage) + ' hit points.')
-        take_damage(target.fighter, damage)
+        inflict_damage(fighter.owner, target.fighter, damage)
     else:
         message(fighter.owner.name.capitalize() + ' attacks ' + target.name + ' but it has no effect!')
  
-def take_damage(fighter, damage):
+def inflict_damage(actor, fighter, damage):
     """
     Apply damage.
     """
@@ -132,8 +132,7 @@ def take_damage(fighter, damage):
             if function is not None:
                 function(fighter.owner)
  
-            if fighter.owner != player:
-                player.fighter.xp += fighter.xp
+            actor.fighter.xp += fighter.xp
  
 def heal(fighter, amount):
     """
@@ -744,7 +743,7 @@ def cast_lightning():
     #zap it!
     message('A lighting bolt strikes the ' + monster.name + ' with a loud thunder! The damage is '
             + str(LIGHTNING_DAMAGE) + ' hit points.', libtcod.light_blue)
-    take_damage(monster.fighter, LIGHTNING_DAMAGE)
+    inflict_damage(player, monster.fighter, LIGHTNING_DAMAGE)
  
 def cast_fireball():
     #ask the player for a target tile to throw a fireball at
@@ -756,7 +755,7 @@ def cast_fireball():
     for obj in current_map.objects:  #damage every fighter in range, including the player
         if obj.distance(x, y) <= FIREBALL_RADIUS and obj.fighter:
             message('The ' + obj.name + ' gets burned for ' + str(FIREBALL_DAMAGE) + ' hit points.', libtcod.orange)
-            take_damage(obj.fighter, FIREBALL_DAMAGE)
+            inflict_damage(player, obj.fighter, FIREBALL_DAMAGE)
  
 def cast_confuse():
     #ask the player for a target to confuse
