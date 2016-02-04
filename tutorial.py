@@ -562,9 +562,6 @@ def inventory_menu(header):
     if index is None or len(player.inventory) == 0: return None
     return player.inventory[index].item
  
-def msgbox(text, width=50):
-    renderer.menu(text, [], width)  #use menu() as a sort of "message box"
- 
 def handle_keys():
     global key
  
