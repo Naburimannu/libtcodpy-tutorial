@@ -47,6 +47,33 @@ class Component:
     def set_owner(self, entity):
         self.owner = entity
 
+class Fighter(Component):
+    """
+    Combat-related properties and methods (monster, player, NPC).
+    """
+    def __init__(self, hp, defense, power, xp, death_function=None):
+        self.base_max_hp = hp
+        self.hp = hp
+        self.base_defense = defense
+        self.base_power = power
+        self.xp = xp
+        self.death_function = death_function
+ 
+    @property
+    def power(self):
+        bonus = sum(equipment.power_bonus for equipment in get_all_equipped(self.owner))
+        return self.base_power + bonus
+ 
+    @property
+    def defense(self):
+        bonus = sum(equipment.defense_bonus for equipment in get_all_equipped(self.owner))
+        return self.base_defense + bonus
+ 
+    @property
+    def max_hp(self):
+        bonus = sum(equipment.max_hp_bonus for equipment in get_all_equipped(self.owner))
+        return self.base_max_hp + bonus
+ 
 class Item(Component):
     """
     An item that can be picked up and used.
@@ -73,4 +100,25 @@ class Equipment(Component):
         # There must be an Item component for the Equipment component to work properly.
         entity.item = Item()
         entity.item.set_owner(entity)
+ 
+class AI(Component):
+    def __init__(self, take_turn, metadata = None):
+        self._turn_function = take_turn
+        self._metadata = metadata
+
+    def take_turn(self):
+        self._turn_function(self.owner, self._metadata)
+
+def get_all_equipped(obj):
+    """
+    Returns a list of all equipped items.
+    """
+    if hasattr(obj, 'inventory'):
+        equipped_list = []
+        for item in obj.inventory:
+            if item.equipment and item.equipment.is_equipped:
+                equipped_list.append(item.equipment)
+        return equipped_list
+    else:
+        return []
  

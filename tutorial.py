@@ -81,33 +81,7 @@ def move_towards(o, target_x, target_y):
     dy = int(round(dy / distance))
     move(o, dx, dy)
  
-class Fighter(Component):
-    """
-    Combat-related properties and methods (monster, player, NPC).
-    """
-    def __init__(self, hp, defense, power, xp, death_function=None):
-        self.base_max_hp = hp
-        self.hp = hp
-        self.base_defense = defense
-        self.base_power = power
-        self.xp = xp
-        self.death_function = death_function
- 
-    @property
-    def power(self):
-        bonus = sum(equipment.power_bonus for equipment in get_all_equipped(self.owner))
-        return self.base_power + bonus
- 
-    @property
-    def defense(self):
-        bonus = sum(equipment.defense_bonus for equipment in get_all_equipped(self.owner))
-        return self.base_defense + bonus
- 
-    @property
-    def max_hp(self):
-        bonus = sum(equipment.max_hp_bonus for equipment in get_all_equipped(self.owner))
-        return self.base_max_hp + bonus
- 
+
 def attack(fighter, target):
     """
     A simple formula for attack damage.
@@ -142,37 +116,30 @@ def heal(fighter, amount):
     if fighter.hp > fighter.max_hp:
         fighter.hp = fighter.max_hp
  
-class BasicMonster(Component):
-    #AI for a basic monster.
-    def take_turn(self):
-        #a basic monster takes its turn. if you can see it, it can see you
-        monster = self.owner
-        if libtcod.map_is_in_fov(current_map.fov_map, monster.x, monster.y):
+def basic_monster(monster, metadata):
+    #a basic monster takes its turn. if you can see it, it can see you
+    if libtcod.map_is_in_fov(current_map.fov_map, monster.x, monster.y): 
+        #move towards player if far away
+        if monster.distance_to(player) >= 2:
+            move_towards(monster, player.x, player.y)
+        #close enough, attack! (if the player is still alive.)
+        elif player.fighter.hp > 0:
+            attack(monster.fighter, player)
  
-            #move towards player if far away
-            if monster.distance_to(player) >= 2:
-                move_towards(monster, player.x, player.y)
- 
-            #close enough, attack! (if the player is still alive.)
-            elif player.fighter.hp > 0:
-                attack(monster.fighter, player)
- 
-class ConfusedMonster(Component):
-    #AI for a temporarily confused monster (reverts to previous AI after a while).
+class confused_monster_metadata:
     def __init__(self, old_ai, num_turns=CONFUSE_NUM_TURNS):
         self.old_ai = old_ai
         self.num_turns = num_turns
-  
-    def take_turn(self):
-        if self.num_turns > 0:
-            #move in a random direction, and decrease the number of turns confused
-            self.owner.move(libtcod.random_get_int(0, -1, 1), libtcod.random_get_int(0, -1, 1))
-            self.num_turns -= 1
+
+def confused_monster(monster, metadata):
+    if metadata.num_turns > 0:
+        #move in a random direction, and decrease the number of turns confused
+        move(monster, libtcod.random_get_int(0, -1, 1), libtcod.random_get_int(0, -1, 1))
+        metadata.num_turns -= 1
  
-        else:  #restore the previous AI (this one will be deleted because it's not referenced anymore)
-            self.owner.ai = self.old_ai
-            message(self.owner.name.capitalize() + ' is no longer confused!', libtcod.red)
- 
+    else:  #restore the previous AI (this one will be deleted because it's not referenced anymore)
+        monster.ai = metadata.old_ai
+        message(monster.name.capitalize() + ' is no longer confused!', libtcod.red)
 
 
 def pick_up(actor, o, from_container):
@@ -260,20 +227,6 @@ def get_equipped_in_slot(actor, slot):
             if obj.equipment and obj.equipment.slot == slot and obj.equipment.is_equipped:
                 return obj.equipment
     return None
- 
-def get_all_equipped(obj):
-    """
-    Returns a list of all equipped items.
-    """
-    if hasattr(obj, 'inventory'):
-        equipped_list = []
-        for item in obj.inventory:
-            if item.equipment and item.equipment.is_equipped:
-                equipped_list.append(item.equipment)
-        return equipped_list
-    else:
-        return []
- 
  
 def is_blocked(x, y):
     #first test the map tile
@@ -447,7 +400,7 @@ def place_objects(room):
             if choice == 'orc':
                 #create an orc
                 fighter_component = Fighter(hp=20, defense=0, power=4, xp=35, death_function=monster_death)
-                ai_component = BasicMonster()
+                ai_component = AI(basic_monster)
  
                 monster = Object(x, y, 'o', 'orc', libtcod.desaturated_green,
                                  blocks=True, fighter=fighter_component, ai=ai_component)
@@ -455,7 +408,7 @@ def place_objects(room):
             elif choice == 'troll':
                 #create a troll
                 fighter_component = Fighter(hp=30, defense=2, power=8, xp=100, death_function=monster_death)
-                ai_component = BasicMonster()
+                ai_component = AI(basic_monster)
  
                 monster = Object(x, y, 'T', 'troll', libtcod.darker_green,
                                  blocks=True, fighter=fighter_component, ai=ai_component)
@@ -746,27 +699,24 @@ def cast_lightning():
     inflict_damage(player, monster.fighter, LIGHTNING_DAMAGE)
  
 def cast_fireball():
-    #ask the player for a target tile to throw a fireball at
     message('Left-click a target tile for the fireball, or right-click to cancel.', libtcod.light_cyan)
     (x, y) = target_tile()
     if x is None: return 'cancelled'
     message('The fireball explodes, burning everything within ' + str(FIREBALL_RADIUS) + ' tiles!', libtcod.orange)
  
-    for obj in current_map.objects:  #damage every fighter in range, including the player
+    for obj in current_map.objects:
         if obj.distance(x, y) <= FIREBALL_RADIUS and obj.fighter:
             message('The ' + obj.name + ' gets burned for ' + str(FIREBALL_DAMAGE) + ' hit points.', libtcod.orange)
             inflict_damage(player, obj.fighter, FIREBALL_DAMAGE)
  
 def cast_confuse():
-    #ask the player for a target to confuse
     message('Left-click an enemy to confuse it, or right-click to cancel.', libtcod.light_cyan)
     monster = target_monster(CONFUSE_RANGE)
     if monster is None: return 'cancelled'
  
-    #replace the monster's AI with a "confused" one; after some turns it will restore the old AI
     old_ai = monster.ai
-    monster.ai = ConfusedMonster(old_ai)
-    monster.ai.owner = monster  #tell the new component who owns it
+    monster.ai = AI(confused_monster, confused_monster_metadata(old_ai))
+    monster.ai.set_owner(monster)
     message('The eyes of the ' + monster.name + ' look vacant, as he starts to stumble around!', libtcod.light_green)
  
  
