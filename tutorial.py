@@ -15,6 +15,7 @@ import renderer
 
 import actions
 import ai
+import ui
 
 INVENTORY_WIDTH = 50
 CHARACTER_SCREEN_WIDTH = 30
@@ -409,8 +410,8 @@ def inventory_menu(header):
     if index is None or len(player.inventory) == 0: return None
     return player.inventory[index].item
  
-def handle_keys():
-    global key, player
+def handle_keys(player):
+    key = ui.key
  
     if key.vk == libtcod.KEY_ENTER and key.lalt:
         #Alt+Enter: toggle fullscreen
@@ -527,29 +528,27 @@ def target_tile(actor, max_range=None):
     """
     Return the position of a tile left-clicked in player's FOV (optionally in a range), or (None,None) if right-clicked.
     """
-    global key, mouse
     while True:
         # Render the screen. This erases the inventory and shows the names of objects under the mouse.
         libtcod.console_flush()
-        libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, key, mouse)
-        renderer.render_all(actor, mouse)
+        ui.poll()
+        renderer.render_all(actor, ui.mouse)
         actor.current_map.fov_needs_recompute = False
  
-        (x, y) = (mouse.cx, mouse.cy)
+        (x, y) = (ui.mouse.cx, ui.mouse.cy)
  
-        if mouse.rbutton_pressed or key.vk == libtcod.KEY_ESCAPE:
+        if ui.mouse.rbutton_pressed or ui.key.vk == libtcod.KEY_ESCAPE:
             return (None, None)
  
         #accept the target if the player clicked in FOV, and in case a range is specified, if it's in that range
-        if (mouse.lbutton_pressed and libtcod.map_is_in_fov(actor.current_map.fov_map, x, y) and
+        if (ui.mouse.lbutton_pressed and libtcod.map_is_in_fov(actor.current_map.fov_map, x, y) and
                 (max_range is None or actor.distance(x, y) <= max_range)):
             return (x, y)
  
 def target_monster(actor, max_range=None):
     #returns a clicked monster inside FOV up to a range, or None if right-clicked
-    global player
     while True:
-        (x, y) = target_tile(max_range)
+        (x, y) = target_tile(actor, max_range)
         if x is None:  #player cancelled
             return None
  
@@ -639,6 +638,8 @@ def load_game():
     file.close()
  
     current_map.initialize_fov()
+
+    return player
  
 def new_game():
     global player, current_map, game_state
@@ -664,6 +665,8 @@ def new_game():
     player.inventory.append(obj)
     equip(player, equipment_component)
     obj.always_visible = True
+
+    return player
  
 def next_level():
     """
@@ -677,17 +680,14 @@ def next_level():
     current_map = make_map(player, current_map.dungeon_level + 1)
  
  
-def play_game():
-    global key, mouse, player
- 
+def play_game(player):
     player_action = None
  
-    mouse = libtcod.Mouse()
-    key = libtcod.Key()
+    ui.init()
 
     while not libtcod.console_is_window_closed():
-        libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, key, mouse)
-        renderer.render_all(player, mouse)
+        ui.poll()
+        renderer.render_all(player, ui.mouse)
         player.current_map.fov_needs_recompute = False
 
         libtcod.console_flush()
@@ -699,7 +699,7 @@ def play_game():
             renderer.clear_object(object)
  
         #handle keys and exit game if needed
-        player_action = handle_keys()
+        player_action = handle_keys(player)
         if player_action == 'exit':
             save_game()
             break

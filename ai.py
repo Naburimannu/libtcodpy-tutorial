@@ -1,5 +1,6 @@
 import libtcodpy as libtcod
 
+import log
 from components import *
 import actions
 

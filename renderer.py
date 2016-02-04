@@ -48,16 +48,15 @@ def main_menu(new_game, play_game, load_game):
         choice = menu('', ['Play a new game', 'Continue last game', 'Quit'], 24)
  
         if choice == 0:
-            new_game()
-            play_game()
+            play_game(new_game())
         if choice == 1:
             try:
-                load_game()
+                player = load_game()
             except:
                 msgbox('\n No saved game to load.\n', 24)
                 continue
-            play_game()
-        elif choice == 2:  #quit
+            play_game(player)
+        elif choice == 2:
             break
 
 def clear_console():
