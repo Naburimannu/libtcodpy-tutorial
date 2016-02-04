@@ -67,7 +67,7 @@ def move(o, dx, dy):
     """
     Returns true if move succeeded.
     """
-    if not current_map.is_blocked(o.x + dx, o.y + dy):
+    if not o.current_map.is_blocked(o.x + dx, o.y + dy):
         o.x += dx
         o.y += dy
         return True
@@ -121,7 +121,7 @@ def heal(fighter, amount):
  
 def basic_monster(monster, metadata):
     #a basic monster takes its turn. if you can see it, it can see you
-    if libtcod.map_is_in_fov(current_map.fov_map, monster.x, monster.y): 
+    if libtcod.map_is_in_fov(monster.current_map.fov_map, monster.x, monster.y): 
         #move towards player if far away
         if monster.distance_to(player) >= 2:
             move_towards(monster, player.x, player.y)
@@ -145,7 +145,7 @@ def confused_monster(monster, metadata):
         message(monster.name.capitalize() + ' is no longer confused!', libtcod.red)
 
 
-def pick_up(actor, o, from_container):
+def pick_up(actor, o):
     """
     Add an Object to the player's inventory and remove from the map.
     """
@@ -153,7 +153,7 @@ def pick_up(actor, o, from_container):
         message(actor.name.capitalize() + ' inventory is full, cannot pick up ' + o.owner.name + '.', libtcod.red)
     else:
         actor.inventory.append(o)
-        from_container.remove(o)
+        actor.current_map.objects.remove(o)
         message(actor.name.capitalize() + ' picked up a ' + o.name + '!', libtcod.green)
  
         #special case: automatically equip, if the corresponding equipment slot is unused
@@ -161,7 +161,7 @@ def pick_up(actor, o, from_container):
         if equipment and get_equipped_in_slot(actor, equipment.slot) is None:
             equip(actor, equipment)
  
-def drop(actor, o, to_container):
+def drop(actor, o):
     """
     Remove an Object from the player's inventory and add it to the map
     at the player's coordinates.
@@ -170,7 +170,7 @@ def drop(actor, o, to_container):
     if o.equipment:
         dequip(actor, o.equipment)
  
-    to_container.append(o)
+    actor.current_map.objects.append(o)
     actor.inventory.remove(o)
     o.x = actor.x
     o.y = actor.y
@@ -464,16 +464,14 @@ def message(new_msg, color = libtcod.white):
         game_msgs.append( (line, color) )
  
  
-def player_move_or_attack(dx, dy):
-    global current_map
- 
+def player_move_or_attack(player, dx, dy): 
     #the coordinates the player is moving to/attacking
     x = player.x + dx
     y = player.y + dy
  
     #try to find an attackable object there
     target = None
-    for object in current_map.objects:
+    for object in player.current_map.objects:
         if object.fighter and object.x == x and object.y == y:
             target = object
             break
@@ -483,7 +481,7 @@ def player_move_or_attack(dx, dy):
         attack(player.fighter, target)
     else:
         if move(player, dx, dy):
-            current_map.fov_needs_recompute = True
+            player.current_map.fov_needs_recompute = True
  
 
 def inventory_menu(header):
@@ -506,7 +504,7 @@ def inventory_menu(header):
     return player.inventory[index].item
  
 def handle_keys():
-    global key
+    global key, player
  
     if key.vk == libtcod.KEY_ENTER and key.lalt:
         #Alt+Enter: toggle fullscreen
@@ -518,21 +516,21 @@ def handle_keys():
     if game_state == 'playing':
         #movement keys
         if key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8:
-            player_move_or_attack(0, -1)
+            player_move_or_attack(player, 0, -1)
         elif key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2:
-            player_move_or_attack(0, 1)
+            player_move_or_attack(player, 0, 1)
         elif key.vk == libtcod.KEY_LEFT or key.vk == libtcod.KEY_KP4:
-            player_move_or_attack(-1, 0)
+            player_move_or_attack(player, -1, 0)
         elif key.vk == libtcod.KEY_RIGHT or key.vk == libtcod.KEY_KP6:
-            player_move_or_attack(1, 0)
+            player_move_or_attack(player, 1, 0)
         elif key.vk == libtcod.KEY_HOME or key.vk == libtcod.KEY_KP7:
-            player_move_or_attack(-1, -1)
+            player_move_or_attack(player, -1, -1)
         elif key.vk == libtcod.KEY_PAGEUP or key.vk == libtcod.KEY_KP9:
-            player_move_or_attack(1, -1)
+            player_move_or_attack(player, 1, -1)
         elif key.vk == libtcod.KEY_END or key.vk == libtcod.KEY_KP1:
-            player_move_or_attack(-1, 1)
+            player_move_or_attack(player, -1, 1)
         elif key.vk == libtcod.KEY_PAGEDOWN or key.vk == libtcod.KEY_KP3:
-            player_move_or_attack(1, 1)
+            player_move_or_attack(player, 1, 1)
         elif key.vk == libtcod.KEY_KP5:
             pass  #do nothing ie wait for the monster to come to you
         else:
@@ -541,9 +539,9 @@ def handle_keys():
  
             if key_char == 'g':
                 # pick up an item
-                for object in current_map.objects:  #look for an item in the player's tile
+                for object in player.current_map.objects:  #look for an item in the player's tile
                     if object.x == player.x and object.y == player.y and object.item:
-                        pick_up(player, object, current_map.objects)
+                        pick_up(player, object)
                         break
  
             if key_char == 'i':
@@ -556,7 +554,7 @@ def handle_keys():
                 # show the inventory; if an item is selected, drop it
                 chosen_item = inventory_menu('Press the key next to an item to drop it, or any other to cancel.\n')
                 if chosen_item is not None:
-                    drop(player, chosen_item.owner, current_map.objects)
+                    drop(player, chosen_item.owner)
  
             if key_char == 'c':
                 # show character information
@@ -567,7 +565,7 @@ def handle_keys():
  
             if key_char == '<':
                 # go down stairs, if the player is on them
-                if current_map.stairs.x == player.x and current_map.stairs.y == player.y:
+                if player.current_map.stairs.x == player.x and player.current_map.stairs.y == player.y:
                     next_level()
  
             return 'didnt-take-turn'
@@ -616,20 +614,20 @@ def monster_death(monster):
     monster.fighter = None
     monster.ai = None
     monster.name = 'remains of ' + monster.name
-    current_map.objects.remove(monster)
-    current_map.objects.insert(0, monster)
+    monster.current_map.objects.remove(monster)
+    monster.current_map.objects.insert(0, monster)
  
 def target_tile(max_range=None):
     """
     Return the position of a tile left-clicked in player's FOV (optionally in a range), or (None,None) if right-clicked.
     """
-    global key, mouse, current_map
+    global key, mouse, player
     while True:
         # Render the screen. This erases the inventory and shows the names of objects under the mouse.
         libtcod.console_flush()
         libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, key, mouse)
-        renderer.render_all(current_map, player, game_msgs, mouse)
-        current_map.fov_needs_recompute = False
+        renderer.render_all(player, game_msgs, mouse)
+        player.current_map.fov_needs_recompute = False
  
         (x, y) = (mouse.cx, mouse.cy)
  
@@ -637,29 +635,31 @@ def target_tile(max_range=None):
             return (None, None)
  
         #accept the target if the player clicked in FOV, and in case a range is specified, if it's in that range
-        if (mouse.lbutton_pressed and libtcod.map_is_in_fov(current_map.fov_map, x, y) and
+        if (mouse.lbutton_pressed and libtcod.map_is_in_fov(player.current_map.fov_map, x, y) and
                 (max_range is None or player.distance(x, y) <= max_range)):
             return (x, y)
  
 def target_monster(max_range=None):
     #returns a clicked monster inside FOV up to a range, or None if right-clicked
+    global player
     while True:
         (x, y) = target_tile(max_range)
         if x is None:  #player cancelled
             return None
  
         #return the first clicked monster, otherwise continue looping
-        for obj in current_map.objects:
+        for obj in player.current_map.objects:
             if obj.x == x and obj.y == y and obj.fighter and obj != player:
                 return obj
  
 def closest_monster(max_range):
     #find closest enemy, up to a maximum range, and in the player's FOV
+    global player
     closest_enemy = None
     closest_dist = max_range + 1  #start with (slightly more than) maximum range
  
-    for object in current_map.objects:
-        if object.fighter and not object == player and libtcod.map_is_in_fov(current_map.fov_map, object.x, object.y):
+    for object in player.current_map.objects:
+        if object.fighter and not object == player and libtcod.map_is_in_fov(player.current_map.fov_map, object.x, object.y):
             #calculate distance between this object and the player
             dist = player.distance_to(object)
             if dist < closest_dist:  #it's closer, so remember it
@@ -689,12 +689,13 @@ def cast_lightning():
     inflict_damage(player, monster.fighter, LIGHTNING_DAMAGE)
  
 def cast_fireball():
+    global player
     message('Left-click a target tile for the fireball, or right-click to cancel.', libtcod.light_cyan)
     (x, y) = target_tile()
     if x is None: return 'cancelled'
     message('The fireball explodes, burning everything within ' + str(FIREBALL_RADIUS) + ' tiles!', libtcod.orange)
  
-    for obj in current_map.objects:
+    for obj in player.current_map.objects:
         if obj.distance(x, y) <= FIREBALL_RADIUS and obj.fighter:
             message('The ' + obj.name + ' gets burned for ' + str(FIREBALL_DAMAGE) + ' hit points.', libtcod.orange)
             inflict_damage(player, obj.fighter, FIREBALL_DAMAGE)
@@ -743,12 +744,11 @@ def new_game():
     player.inventory = [] 
     player.level = 1
  
-    #generate map (at this point it's not drawn to the screen)
     current_map = make_map(player, 1)
  
     game_state = 'playing'
  
-    #create the list of game messages and their colors, starts empty
+    # the list of game messages and their colors, starts empty
     game_msgs = []
  
     #a warm welcoming message!
@@ -774,7 +774,7 @@ def next_level():
  
  
 def play_game():
-    global key, mouse, current_map
+    global key, mouse, player
  
     player_action = None
  
@@ -783,15 +783,15 @@ def play_game():
 
     while not libtcod.console_is_window_closed():
         libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, key, mouse)
-        renderer.render_all(current_map, player, game_msgs, mouse)
-        current_map.fov_needs_recompute = False
+        renderer.render_all(player, game_msgs, mouse)
+        player.current_map.fov_needs_recompute = False
 
         libtcod.console_flush()
  
         check_level_up()
  
         #erase all objects at their old locations, before they move
-        for object in current_map.objects:
+        for object in player.current_map.objects:
             renderer.clear_object(object)
  
         #handle keys and exit game if needed
@@ -801,7 +801,7 @@ def play_game():
             break
  
         if game_state == 'playing' and player_action != 'didnt-take-turn':
-            for object in current_map.objects:
+            for object in player.current_map.objects:
                 if object.ai:
                     object.ai.take_turn()
  

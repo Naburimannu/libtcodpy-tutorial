@@ -153,10 +153,11 @@ def menu(header, options, width):
     if index >= 0 and index < len(options): return index
     return None
  
-def render_all(current_map, player, game_msgs, mouse):
+def render_all(player, game_msgs, mouse):
     global color_dark_wall, color_light_wall
     global color_dark_ground, color_light_ground
  
+    current_map = player.current_map
     if current_map.fov_needs_recompute:
         #recompute FOV if needed (the player moved or something)
         libtcod.map_compute_fov(current_map.fov_map, player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO)
