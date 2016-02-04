@@ -106,8 +106,8 @@ class AI(Component):
         self._turn_function = take_turn
         self._metadata = metadata
 
-    def take_turn(self):
-        self._turn_function(self.owner, self._metadata)
+    def take_turn(self, player):
+        self._turn_function(self.owner, player, self._metadata)
 
 def get_all_equipped(obj):
     """

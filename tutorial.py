@@ -14,6 +14,7 @@ import map
 import renderer
 
 import actions
+import ai
 
 INVENTORY_WIDTH = 50
 CHARACTER_SCREEN_WIDTH = 30
@@ -30,7 +31,6 @@ HEAL_AMOUNT = 40
 LIGHTNING_DAMAGE = 40
 LIGHTNING_RANGE = 5
 CONFUSE_RANGE = 8
-CONFUSE_NUM_TURNS = 10
 FIREBALL_RADIUS = 3
 FIREBALL_DAMAGE = 25
  
@@ -62,32 +62,6 @@ class Rect:
         #returns true if this rectangle intersects with another one
         return (self.x1 <= other.x2 and self.x2 >= other.x1 and
                 self.y1 <= other.y2 and self.y2 >= other.y1)
- 
-def basic_monster(monster, metadata):
-    #a basic monster takes its turn. if you can see it, it can see you
-    if libtcod.map_is_in_fov(monster.current_map.fov_map, monster.x, monster.y): 
-        #move towards player if far away
-        if monster.distance_to(player) >= 2:
-            actions.move_towards(monster, player.x, player.y)
-        #close enough, attack! (if the player is still alive.)
-        elif player.fighter.hp > 0:
-            actions.attack(monster.fighter, player)
- 
-class confused_monster_metadata:
-    def __init__(self, old_ai, num_turns=CONFUSE_NUM_TURNS):
-        self.old_ai = old_ai
-        self.num_turns = num_turns
-
-def confused_monster(monster, metadata):
-    if metadata.num_turns > 0:
-        #move in a random direction, and decrease the number of turns confused
-        actions.move(monster, libtcod.random_get_int(0, -1, 1), libtcod.random_get_int(0, -1, 1))
-        metadata.num_turns -= 1
- 
-    else:  #restore the previous AI (this one will be deleted because it's not referenced anymore)
-        monster.ai = metadata.old_ai
-        log.message(monster.name.capitalize() + ' is no longer confused!', libtcod.red)
-
 
 def pick_up(actor, o):
     """
@@ -333,7 +307,7 @@ def place_objects(new_map, room):
             if choice == 'orc':
                 #create an orc
                 fighter_component = Fighter(hp=20, defense=0, power=4, xp=35, death_function=monster_death)
-                ai_component = AI(basic_monster)
+                ai_component = AI(ai.basic_monster)
  
                 monster = Object(x, y, 'o', 'orc', libtcod.desaturated_green,
                                  blocks=True, fighter=fighter_component, ai=ai_component)
@@ -341,7 +315,7 @@ def place_objects(new_map, room):
             elif choice == 'troll':
                 #create a troll
                 fighter_component = Fighter(hp=30, defense=2, power=8, xp=100, death_function=monster_death)
-                ai_component = AI(basic_monster)
+                ai_component = AI(ai.basic_monster)
  
                 monster = Object(x, y, 'T', 'troll', libtcod.darker_green,
                                  blocks=True, fighter=fighter_component, ai=ai_component)
@@ -638,7 +612,7 @@ def cast_confuse():
     if monster is None: return 'cancelled'
  
     old_ai = monster.ai
-    monster.ai = AI(confused_monster, confused_monster_metadata(old_ai))
+    monster.ai = AI(ai.confused_monster, ai.confused_monster_metadata(old_ai))
     monster.ai.set_owner(monster)
     log.message('The eyes of the ' + monster.name + ' look vacant, as he starts to stumble around!', libtcod.light_green)
  
@@ -734,7 +708,7 @@ def play_game():
         if game_state == 'playing' and player_action != 'didnt-take-turn':
             for object in player.current_map.objects:
                 if object.ai:
-                    object.ai.take_turn()
+                    object.ai.take_turn(player)
  
  
 renderer.renderer_init()
