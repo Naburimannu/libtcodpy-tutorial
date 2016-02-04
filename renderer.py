@@ -153,7 +153,7 @@ def menu(header, options, width):
     if index >= 0 and index < len(options): return index
     return None
  
-def render_all(current_map, player, dungeon_level, game_msgs, mouse):
+def render_all(current_map, player, game_msgs, mouse):
     global color_dark_wall, color_light_wall
     global color_dark_ground, color_light_ground
  
@@ -206,7 +206,7 @@ def render_all(current_map, player, dungeon_level, game_msgs, mouse):
     #show the player's stats
     _render_bar(1, 1, config.BAR_WIDTH, 'HP', player.fighter.hp, player.fighter.max_hp,
                libtcod.light_red, libtcod.darker_red)
-    libtcod.console_print_ex(panel, 1, 3, libtcod.BKGND_NONE, libtcod.LEFT, 'Dungeon level ' + str(dungeon_level))
+    libtcod.console_print_ex(panel, 1, 3, libtcod.BKGND_NONE, libtcod.LEFT, 'Dungeon level ' + str(current_map.dungeon_level))
  
     #display names of objects under the mouse
     libtcod.console_set_default_foreground(panel, libtcod.light_gray)

@@ -65,7 +65,7 @@ class Rect:
  
 def move(o, dx, dy):
     #move by the given amount, if the destination is not blocked
-    if not is_blocked(o.x + dx, o.y + dy):
+    if not current_map.is_blocked(o.x + dx, o.y + dy):
         o.x += dx
         o.y += dy
  
@@ -228,46 +228,30 @@ def get_equipped_in_slot(actor, slot):
                 return obj.equipment
     return None
  
-def is_blocked(x, y):
-    #first test the map tile
-    if current_map.blocked[x][y]:
-        return True
- 
-    #now check for any blocking objects
-    for object in current_map.objects:
-        if object.blocks and object.x == x and object.y == y:
-            return True
- 
-    return False
- 
-def create_room(room):
-    global current_map
+def create_room(new_map, room):
     #go through the tiles in the rectangle and make them passable
     for x in range(room.x1 + 1, room.x2):
         for y in range(room.y1 + 1, room.y2):
-            current_map.blocked[x][y] = False
-            current_map.block_sight[x][y] = False
+            new_map.blocked[x][y] = False
+            new_map.block_sight[x][y] = False
  
-def create_h_tunnel(x1, x2, y):
-    global current_map
+def create_h_tunnel(new_map, x1, x2, y):
     #horizontal tunnel. min() and max() are used in case x1>x2
     for x in range(min(x1, x2), max(x1, x2) + 1):
-        current_map.blocked[x][y] = False
-        current_map.block_sight[x][y] = False
+        new_map.blocked[x][y] = False
+        new_map.block_sight[x][y] = False
  
-def create_v_tunnel(y1, y2, x):
-    global current_map
+def create_v_tunnel(new_map, y1, y2, x):
     #vertical tunnel
     for y in range(min(y1, y2), max(y1, y2) + 1):
-        current_map.blocked[x][y] = False
-        current_map.block_sight[x][y] = False
+        new_map.blocked[x][y] = False
+        new_map.block_sight[x][y] = False
  
-def make_map():
-    global current_map
+def make_map(dungeon_level):
     renderer.clear_console()  #unexplored areas start black (which is the default background color)
  
-    current_map = map.Map(config.MAP_HEIGHT, config.MAP_WIDTH)
-    current_map.objects.append(player)
+    new_map = map.Map(config.MAP_HEIGHT, config.MAP_WIDTH, dungeon_level)
+    new_map.objects.append(player)
  
     rooms = []
     num_rooms = 0
@@ -277,8 +261,8 @@ def make_map():
         w = libtcod.random_get_int(0, ROOM_MIN_SIZE, ROOM_MAX_SIZE)
         h = libtcod.random_get_int(0, ROOM_MIN_SIZE, ROOM_MAX_SIZE)
         #random position without going out of the boundaries of the map
-        x = libtcod.random_get_int(0, 0, current_map.width - w - 1)
-        y = libtcod.random_get_int(0, 0, current_map.height - h - 1)
+        x = libtcod.random_get_int(0, 0, new_map.width - w - 1)
+        y = libtcod.random_get_int(0, 0, new_map.height - h - 1)
  
         #"Rect" class makes rectangles easier to work with
         new_room = Rect(x, y, w, h)
@@ -294,10 +278,10 @@ def make_map():
             #this means there are no intersections, so this room is valid
  
             #"paint" it to the map's tiles
-            create_room(new_room)
+            create_room(new_map, new_room)
  
             #add some contents to this room, such as monsters
-            place_objects(new_room)
+            place_objects(new_map, new_room)
  
             #center coordinates of new room, will be useful later
             (new_x, new_y) = new_room.center()
@@ -316,22 +300,23 @@ def make_map():
                 #draw a coin (random number that is either 0 or 1)
                 if libtcod.random_get_int(0, 0, 1) == 1:
                     #first move horizontally, then vertically
-                    create_h_tunnel(prev_x, new_x, prev_y)
-                    create_v_tunnel(prev_y, new_y, new_x)
+                    create_h_tunnel(new_map, prev_x, new_x, prev_y)
+                    create_v_tunnel(new_map, prev_y, new_y, new_x)
                 else:
                     #first move vertically, then horizontally
-                    create_v_tunnel(prev_y, new_y, prev_x)
-                    create_h_tunnel(prev_x, new_x, new_y)
+                    create_v_tunnel(new_map, prev_y, new_y, prev_x)
+                    create_h_tunnel(new_map, prev_x, new_x, new_y)
  
             #finally, append the new room to the list
             rooms.append(new_room)
             num_rooms += 1
  
     #create stairs at the center of the last room
-    current_map.stairs = Object(new_x, new_y, '<', 'stairs', libtcod.white, always_visible=True)
-    current_map.objects.insert(0, current_map.stairs)
+    new_map.stairs = Object(new_x, new_y, '<', 'stairs', libtcod.white, always_visible=True)
+    new_map.objects.insert(0, new_map.stairs)
 
-    current_map.initialize_fov()
+    new_map.initialize_fov()
+    return new_map
  
 def random_choice_index(chances):  #choose one option from list of chances, returning its index
     #the dice will land on some number between 1 and the sum of the chances
@@ -355,35 +340,35 @@ def random_choice(chances_dict):
  
     return strings[random_choice_index(chances)]
  
-def from_dungeon_level(table):
+def from_dungeon_level(new_map, table):
     #returns a value that depends on level. the table specifies what value occurs after each level, default is 0.
     for (value, level) in reversed(table):
-        if dungeon_level >= level:
+        if new_map.dungeon_level >= level:
             return value
     return 0
  
-def place_objects(room):
+def place_objects(new_map, room):
     #this is where we decide the chance of each monster or item appearing.
  
     #maximum number of monsters per room
-    max_monsters = from_dungeon_level([[2, 1], [3, 4], [5, 6]])
+    max_monsters = from_dungeon_level(new_map, [[2, 1], [3, 4], [5, 6]])
  
     #chance of each monster
     monster_chances = {}
     monster_chances['orc'] = 80  #orc always shows up, even if all other monsters have 0 chance
-    monster_chances['troll'] = from_dungeon_level([[15, 3], [30, 5], [60, 7]])
+    monster_chances['troll'] = from_dungeon_level(new_map, [[15, 3], [30, 5], [60, 7]])
  
     #maximum number of items per room
-    max_items = from_dungeon_level([[1, 1], [2, 4]])
+    max_items = from_dungeon_level(new_map, [[1, 1], [2, 4]])
  
     #chance of each item (by default they have a chance of 0 at level 1, which then goes up)
     item_chances = {}
     item_chances['heal'] = 35  #healing potion always shows up, even if all other items have 0 chance
-    item_chances['lightning'] = from_dungeon_level([[25, 4]])
-    item_chances['fireball'] =  from_dungeon_level([[25, 6]])
-    item_chances['confuse'] =   from_dungeon_level([[10, 2]])
-    item_chances['sword'] =     from_dungeon_level([[5, 4]])
-    item_chances['shield'] =    from_dungeon_level([[15, 8]])
+    item_chances['lightning'] = from_dungeon_level(new_map, [[25, 4]])
+    item_chances['fireball'] =  from_dungeon_level(new_map, [[25, 6]])
+    item_chances['confuse'] =   from_dungeon_level(new_map, [[10, 2]])
+    item_chances['sword'] =     from_dungeon_level(new_map, [[5, 4]])
+    item_chances['shield'] =    from_dungeon_level(new_map, [[15, 8]])
  
  
     #choose random number of monsters
@@ -395,7 +380,7 @@ def place_objects(room):
         y = libtcod.random_get_int(0, room.y1+1, room.y2-1)
  
         #only place it if the tile is not blocked
-        if not is_blocked(x, y):
+        if not new_map.is_blocked(x, y):
             choice = random_choice(monster_chances)
             if choice == 'orc':
                 #create an orc
@@ -413,7 +398,7 @@ def place_objects(room):
                 monster = Object(x, y, 'T', 'troll', libtcod.darker_green,
                                  blocks=True, fighter=fighter_component, ai=ai_component)
  
-            current_map.objects.append(monster)
+            new_map.objects.append(monster)
  
     #choose random number of items
     num_items = libtcod.random_get_int(0, 0, max_items)
@@ -424,7 +409,7 @@ def place_objects(room):
         y = libtcod.random_get_int(0, room.y1+1, room.y2-1)
  
         #only place it if the tile is not blocked
-        if not is_blocked(x, y):
+        if not new_map.is_blocked(x, y):
             choice = random_choice(item_chances)
             if choice == 'heal':
                 #create a healing potion
@@ -456,7 +441,7 @@ def place_objects(room):
                 equipment_component = Equipment(slot='left hand', defense_bonus=1)
                 item = Object(x, y, '[', 'shield', libtcod.darker_orange, equipment=equipment_component)
  
-            current_map.objects.insert(0, item)
+            new_map.objects.insert(0, item)
             item.always_visible = True  #items are visible even out-of-FOV, if in an explored area
  
  
@@ -638,7 +623,7 @@ def target_tile(max_range=None):
         # Render the screen. This erases the inventory and shows the names of objects under the mouse.
         libtcod.console_flush()
         libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, key, mouse)
-        renderer.render_all(current_map, player, dungeon_level, game_msgs, mouse)
+        renderer.render_all(current_map, player, game_msgs, mouse)
         current_map.fov_needs_recompute = False
  
         (x, y) = (mouse.cx, mouse.cy)
@@ -721,7 +706,7 @@ def cast_confuse():
  
  
 def save_game():
-    global current_map, player, game_msgs, game_state, dungeon_level
+    global current_map, player, game_msgs, game_state
     """
     Overwrites any existing data.
     """
@@ -730,24 +715,22 @@ def save_game():
     file['player_index'] = current_map.objects.index(player)  #index of player in objects list
     file['game_msgs'] = game_msgs
     file['game_state'] = game_state
-    file['dungeon_level'] = dungeon_level
     file.close()
  
 def load_game():
-    global current_map, player, stairs, game_msgs, game_state, dungeon_level
+    global current_map, player, game_msgs, game_state
  
     file = shelve.open('savegame', 'r')
     current_map = file['current_map']
     player = current_map.objects[file['player_index']]  #get index of player in objects list and access it
     game_msgs = file['game_msgs']
     game_state = file['game_state']
-    dungeon_level = file['dungeon_level']
     file.close()
  
     current_map.initialize_fov()
  
 def new_game():
-    global player, game_msgs, game_state, dungeon_level
+    global player, current_map, game_msgs, game_state
  
     #create object representing the player
     fighter_component = Fighter(hp=100, defense=1, power=2, xp=0, death_function=player_death)
@@ -756,8 +739,7 @@ def new_game():
     player.level = 1
  
     #generate map (at this point it's not drawn to the screen)
-    dungeon_level = 1
-    make_map()
+    current_map = make_map(1)
  
     game_state = 'playing'
     player.inventory = []
@@ -779,13 +761,12 @@ def next_level():
     """
     Advance to the next level.
     """
-    global dungeon_level
+    global current_map
     message('You take a moment to rest, and recover your strength.', libtcod.light_violet)
     heal(player.fighter, player.fighter.max_hp / 2)  #heal the player by 50%
  
-    dungeon_level += 1
     message('After a rare moment of peace, you descend deeper into the heart of the dungeon...', libtcod.red)
-    make_map()
+    current_map = make_map(current_map.dungeon_level + 1)
  
  
 def play_game():
@@ -798,7 +779,7 @@ def play_game():
 
     while not libtcod.console_is_window_closed():
         libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, key, mouse)
-        renderer.render_all(current_map, player, dungeon_level, game_msgs, mouse)
+        renderer.render_all(current_map, player, game_msgs, mouse)
         current_map.fov_needs_recompute = False
 
         libtcod.console_flush()

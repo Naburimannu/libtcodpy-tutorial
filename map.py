@@ -1,9 +1,10 @@
 import libtcodpy as libtcod # for field of view management
 
 class Map(object):
-    def __init__(self, height, width):
+    def __init__(self, height, width, dungeon_level):
         self.height = height
         self.width = width
+        self.dungeon_level = dungeon_level
         self.objects = []
 
         # TODO: do stairs get cloned when saved?
@@ -23,3 +24,16 @@ class Map(object):
         for y in range(self.height):
             for x in range(self.width):
                 libtcod.map_set_properties(self.fov_map, x, y, not self.block_sight[x][y], not self.blocked[x][y])
+ 
+    def is_blocked(self, x, y):
+        """
+        Returns true if the map terrain or any blocking objects are at (x, y)
+        """
+        if self.blocked[x][y]:
+            return True
+ 
+        for object in self.objects:
+            if object.blocks and object.x == x and object.y == y:
+                return True
+ 
+        return False
