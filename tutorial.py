@@ -172,79 +172,79 @@ class ConfusedMonster(Component):
  
         else:  #restore the previous AI (this one will be deleted because it's not referenced anymore)
             self.owner.ai = self.old_ai
-            message('The ' + self.owner.name + ' is no longer confused!', libtcod.red)
+            message(self.owner.name.capitalize() + ' is no longer confused!', libtcod.red)
  
 
 
-def pick_up(o, from_container, to_container):
+def pick_up(actor, o, from_container):
     """
     Add an Object to the player's inventory and remove from the map.
     """
-    if len(to_container) >= 26:
-        message('Your inventory is full, cannot pick up ' + o.owner.name + '.', libtcod.red)
+    if len(actor.inventory) >= 26:
+        message(actor.name.capitalize() + ' inventory is full, cannot pick up ' + o.owner.name + '.', libtcod.red)
     else:
-        to_container.append(o)
+        actor.inventory.append(o)
         from_container.remove(o)
-        message('You picked up a ' + o.name + '!', libtcod.green)
+        message(actor.name.capitalize() + ' picked up a ' + o.name + '!', libtcod.green)
  
         #special case: automatically equip, if the corresponding equipment slot is unused
         equipment = o.equipment
-        if equipment and get_equipped_in_slot(equipment.slot) is None:
-            equip(equipment)
+        if equipment and get_equipped_in_slot(actor, equipment.slot) is None:
+            equip(actor, equipment)
  
-def drop(o, from_container, to_container):
+def drop(actor, o, to_container):
     """
     Remove an Object from the player's inventory and add it to the map
     at the player's coordinates.
     If it's equipment, dequip before dropping.
     """
     if o.equipment:
-        dequip(o.equipment)
+        dequip(actor, o.equipment)
  
     to_container.append(o)
-    from_container.remove(o)
-    o.x = player.x
-    o.y = player.y
-    message('You dropped a ' + o.name + '.', libtcod.yellow)
+    actor.inventory.remove(o)
+    o.x = actor.x
+    o.y = actor.y
+    message(actor.name.capitalize() + ' dropped a ' + o.name + '.', libtcod.yellow)
  
-def use(o):
+def use(actor, o):
     """
     If the object has the Equipment component, toggle equip/dequip.
     Otherwise invoke its use_function and destroy it.
     """
     if o.equipment:
-        toggle_equip(o.equipment)
+        toggle_equip(actor, o.equipment)
         return
  
     if o.item.use_function is None:
         message('The ' + o.name + ' cannot be used.')
     else:
         if o.item.use_function() != 'cancelled':
-            player.inventory.remove(o)
+            actor.inventory.remove(o)
  
 
 # takes Equipment
-def toggle_equip(eqp):
+def toggle_equip(actor, eqp):
     if eqp.is_equipped:
-        dequip(eqp)
+        dequip(actor, eqp)
     else:
-        equip(eqp)
+        equip(actor, eqp)
  
 # takes Equipment
-def equip(eqp):
+def equip(actor, eqp):
     """
     Equip the object (and log).
     Ensure only one object per slot.
     """
-    old_equipment = get_equipped_in_slot(eqp.slot)
+    old_equipment = get_equipped_in_slot(actor, eqp.slot)
     if old_equipment is not None:
-        dequip(old_equipment)
+        dequip(actor, old_equipment)
  
     eqp.is_equipped = True
     message('Equipped ' + eqp.owner.name + ' on ' + eqp.slot + '.', libtcod.light_green)
  
 # takes Equipment
-def dequip(eqp):
+def dequip(actor, eqp):
     """
     Dequip the object (and log).
     """
@@ -252,22 +252,23 @@ def dequip(eqp):
     eqp.is_equipped = False
     message('Dequipped ' + eqp.owner.name + ' from ' + eqp.slot + '.', libtcod.light_yellow)
  
-def get_equipped_in_slot(slot):
+def get_equipped_in_slot(actor, slot):
     """
     Returns Equipment in a slot, or None.
     """
-    for obj in player.inventory:
-        if obj.equipment and obj.equipment.slot == slot and obj.equipment.is_equipped:
-            return obj.equipment
+    if hasattr(actor, 'inventory'):
+        for obj in actor.inventory:
+            if obj.equipment and obj.equipment.slot == slot and obj.equipment.is_equipped:
+                return obj.equipment
     return None
  
 def get_all_equipped(obj):
     """
     Returns a list of all equipped items.
     """
-    if obj == player:
+    if hasattr(obj, 'inventory'):
         equipped_list = []
-        for item in player.inventory:
+        for item in obj.inventory:
             if item.equipment and item.equipment.is_equipped:
                 equipped_list.append(item.equipment)
         return equipped_list
@@ -600,20 +601,20 @@ def handle_keys():
                 # pick up an item
                 for object in current_map.objects:  #look for an item in the player's tile
                     if object.x == player.x and object.y == player.y and object.item:
-                        pick_up(object, current_map.objects, player.inventory)
+                        pick_up(player, object, current_map.objects)
                         break
  
             if key_char == 'i':
                 # show the inventory; if an item is selected, use it
                 chosen_item = inventory_menu('Press the key next to an item to use it, or any other to cancel.\n')
                 if chosen_item is not None:
-                    use(chosen_item.owner)
+                    use(player, chosen_item.owner)
  
             if key_char == 'd':
                 # show the inventory; if an item is selected, drop it
                 chosen_item = inventory_menu('Press the key next to an item to drop it, or any other to cancel.\n')
                 if chosen_item is not None:
-                    drop(chosen_item.owner, player.inventory, current_map.objects)
+                    drop(player, chosen_item.owner, current_map.objects)
  
             if key_char == 'c':
                 # show character information
@@ -822,7 +823,7 @@ def new_game():
     equipment_component = Equipment(slot='right hand', power_bonus=2)
     obj = Object(0, 0, '-', 'dagger', libtcod.sky, equipment=equipment_component)
     player.inventory.append(obj)
-    equip(equipment_component)
+    equip(player, equipment_component)
     obj.always_visible = True
  
 def next_level():
