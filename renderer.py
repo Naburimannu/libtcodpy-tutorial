@@ -29,7 +29,7 @@ def renderer_init():
     panel = libtcod.console_new(config.SCREEN_WIDTH, config.PANEL_HEIGHT)
 
  
-def _msgbox(text, width=50):
+def msgbox(text, width=50):
     menu(text, [], width)  #use menu() as a sort of "message box"
 
 def main_menu(new_game, play_game, load_game):
@@ -53,7 +53,7 @@ def main_menu(new_game, play_game, load_game):
             try:
                 load_game()
             except:
-                _msgbox('\n No saved game to load.\n', 24)
+                msgbox('\n No saved game to load.\n', 24)
                 continue
             play_game()
         elif choice == 2:  #quit
