@@ -277,7 +277,7 @@ def get_all_equipped(obj):
  
 def is_blocked(x, y):
     #first test the map tile
-    if current_map.tiles[x][y].blocked:
+    if current_map.blocked[x][y]:
         return True
  
     #now check for any blocking objects
@@ -292,22 +292,22 @@ def create_room(room):
     #go through the tiles in the rectangle and make them passable
     for x in range(room.x1 + 1, room.x2):
         for y in range(room.y1 + 1, room.y2):
-            current_map.tiles[x][y].blocked = False
-            current_map.tiles[x][y].block_sight = False
+            current_map.blocked[x][y] = False
+            current_map.block_sight[x][y] = False
  
 def create_h_tunnel(x1, x2, y):
     global current_map
     #horizontal tunnel. min() and max() are used in case x1>x2
     for x in range(min(x1, x2), max(x1, x2) + 1):
-        current_map.tiles[x][y].blocked = False
-        current_map.tiles[x][y].block_sight = False
+        current_map.blocked[x][y] = False
+        current_map.block_sight[x][y] = False
  
 def create_v_tunnel(y1, y2, x):
     global current_map
     #vertical tunnel
     for y in range(min(y1, y2), max(y1, y2) + 1):
-        current_map.tiles[x][y].blocked = False
-        current_map.tiles[x][y].block_sight = False
+        current_map.blocked[x][y] = False
+        current_map.block_sight[x][y] = False
  
 def make_map():
     global current_map

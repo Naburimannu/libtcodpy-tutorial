@@ -97,7 +97,7 @@ def _get_names_under_mouse(objects, fov_map, mouse):
 def _draw_object(o, map, fov_map):
     #only show if it's visible to the player; or it's set to "always visible" and on an explored tile
     if (libtcod.map_is_in_fov(fov_map, o.x, o.y) or
-            (o.always_visible and map[o.x][o.y].explored)):
+            (o.always_visible and map.explored[o.x][o.y])):
         #set the color and then draw the character that represents this object at its position
         libtcod.console_set_default_foreground(con, o.color)
         libtcod.console_put_char(con, o.x, o.y, o.char, libtcod.BKGND_NONE)
@@ -165,10 +165,10 @@ def render_all(current_map, player, dungeon_level, game_msgs, mouse):
         for y in range(current_map.height):
             for x in range(current_map.width):
                 visible = libtcod.map_is_in_fov(current_map.fov_map, x, y)
-                wall = current_map.tiles[x][y].block_sight
+                wall = current_map.block_sight[x][y]
                 if not visible:
                     #if it's not visible right now, the player can only see it if it's explored
-                    if current_map.tiles[x][y].explored:
+                    if current_map.explored[x][y]:
                         if wall:
                             libtcod.console_set_char_background(con, x, y, color_dark_wall, libtcod.BKGND_SET)
                         else:
@@ -179,14 +179,14 @@ def render_all(current_map, player, dungeon_level, game_msgs, mouse):
                     else:
                         libtcod.console_set_char_background(con, x, y, color_light_ground, libtcod.BKGND_SET )
                         #since it's visible, explore it
-                    current_map.tiles[x][y].explored = True
+                    current_map.explored[x][y] = True
  
     #draw all objects in the list, except the player. we want it to
     #always appear over all other objects! so it's drawn later.
     for object in current_map.objects:
         if object != player:
-            _draw_object(object, current_map.tiles, current_map.fov_map)
-    _draw_object(player, current_map.tiles, current_map.fov_map)
+            _draw_object(object, current_map, current_map.fov_map)
+    _draw_object(player, current_map, current_map.fov_map)
  
     #blit the contents of "con" to the root console
     libtcod.console_blit(con, 0, 0, config.MAP_WIDTH, config.MAP_HEIGHT, 0, 0, 0)
