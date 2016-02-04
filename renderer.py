@@ -1,6 +1,7 @@
 import libtcodpy as libtcod
 
 import config
+import log
 
 color_dark_wall = libtcod.Color(0, 0, 100)
 color_light_wall = libtcod.Color(130, 110, 50)
@@ -153,7 +154,7 @@ def menu(header, options, width):
     if index >= 0 and index < len(options): return index
     return None
  
-def render_all(player, game_msgs, mouse):
+def render_all(player, mouse):
     global color_dark_wall, color_light_wall
     global color_dark_ground, color_light_ground
  
@@ -199,7 +200,7 @@ def render_all(player, game_msgs, mouse):
  
     #print the game messages, one line at a time
     y = 1
-    for (line, color) in game_msgs:
+    for (line, color) in log.game_msgs:
         libtcod.console_set_default_foreground(panel, color)
         libtcod.console_print_ex(panel, MSG_X, y, libtcod.BKGND_NONE, libtcod.LEFT,line)
         y += 1
