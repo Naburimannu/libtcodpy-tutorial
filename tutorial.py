@@ -250,11 +250,12 @@ def create_v_tunnel(new_map, y1, y2, x):
         new_map.blocked[x][y] = False
         new_map.block_sight[x][y] = False
  
-def make_map(dungeon_level):
+def make_map(player, dungeon_level):
     renderer.clear_console()  #unexplored areas start black (which is the default background color)
  
     new_map = map.Map(config.MAP_HEIGHT, config.MAP_WIDTH, dungeon_level)
     new_map.objects.append(player)
+    player.current_map = new_map
  
     rooms = []
     num_rooms = 0
@@ -402,6 +403,7 @@ def place_objects(new_map, room):
                                  blocks=True, fighter=fighter_component, ai=ai_component)
  
             new_map.objects.append(monster)
+            monster.current_map = new_map
  
     #choose random number of items
     num_items = libtcod.random_get_int(0, 0, max_items)
@@ -738,14 +740,13 @@ def new_game():
     #create object representing the player
     fighter_component = Fighter(hp=100, defense=1, power=2, xp=0, death_function=player_death)
     player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component)
- 
+    player.inventory = [] 
     player.level = 1
  
     #generate map (at this point it's not drawn to the screen)
-    current_map = make_map(1)
+    current_map = make_map(player, 1)
  
     game_state = 'playing'
-    player.inventory = []
  
     #create the list of game messages and their colors, starts empty
     game_msgs = []
@@ -769,7 +770,7 @@ def next_level():
     heal(player.fighter, player.fighter.max_hp / 2)  #heal the player by 50%
  
     message('After a rare moment of peace, you descend deeper into the heart of the dungeon...', libtcod.red)
-    current_map = make_map(current_map.dungeon_level + 1)
+    current_map = make_map(player, current_map.dungeon_level + 1)
  
  
 def play_game():
