@@ -1,3 +1,9 @@
+"""
+Actions which might be used by the AI: movement and combat.
+
+Player-only actions could live here but can also sit up top in roguelike.py.
+Magical effects and targeting (spells.py) could also live here.
+"""
 import math
 
 import log

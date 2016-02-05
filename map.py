@@ -7,7 +7,6 @@ class Map(object):
         self.dungeon_level = dungeon_level
         self.objects = []
 
-        # TODO: do stairs get cloned when saved?
         self.stairs = None
         self.fov_map = None
 
@@ -18,7 +17,7 @@ class Map(object):
 
     def initialize_fov(self):
         # After being loaded from savegame, we need to make sure the C state
-        # is reinitialized, so we can't just set this in __init__().
+        # is reinitialized, so we can't just set fov_needs_recompute in __init__().
         self.fov_needs_recompute = True
         self.fov_map = libtcod.map_new(self.width, self.height)
         for y in range(self.height):
@@ -27,7 +26,7 @@ class Map(object):
  
     def is_blocked(self, x, y):
         """
-        Returns true if the map terrain or any blocking objects are at (x, y)
+        Returns true if impassible map terrain or any blocking objects are at (x, y)
         """
         if self.blocked[x][y]:
             return True

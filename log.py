@@ -1,3 +1,11 @@
+"""
+Global message log.
+
+Call log.init() before using.
+Retrieve (message, color) tuples from log.game_msgs[].
+Append them using log.message().
+"""
+
 import libtcodpy as libtcod
 import textwrap
 
@@ -13,8 +21,10 @@ def init():
     game_msgs = []
 
 def message(new_msg, color = libtcod.white):
+    """
+    Add a colored string to the log; does wordwrap at MSG_WIDTH characters.
+    """
     global game_msgs
-    #split the message if necessary, among multiple lines
     new_msg_lines = textwrap.wrap(new_msg, MSG_WIDTH)
  
     for line in new_msg_lines:

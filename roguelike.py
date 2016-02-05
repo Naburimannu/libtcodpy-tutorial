@@ -259,7 +259,7 @@ def save_game(player):
     """
     file = shelve.open('savegame', 'n')
     file['current_map'] = player.current_map
-    file['player_index'] = current_map.objects.index(player)  #index of player in objects list
+    file['player_index'] = player.current_map.objects.index(player)  #index of player in objects list
     file['game_msgs'] = log.game_msgs
     file.close()
  

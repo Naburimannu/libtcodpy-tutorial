@@ -1,6 +1,8 @@
+"""
+Simple entity system: any renderable Object can have a number of Components attached.
+"""
 import math
 
- 
 class Object:
     """
     This is a generic object: the player, a monster, an item, the stairs...
@@ -61,17 +63,17 @@ class Fighter(Component):
  
     @property
     def power(self):
-        bonus = sum(equipment.power_bonus for equipment in get_all_equipped(self.owner))
+        bonus = sum(equipment.power_bonus for equipment in _get_all_equipped(self.owner))
         return self.base_power + bonus
  
     @property
     def defense(self):
-        bonus = sum(equipment.defense_bonus for equipment in get_all_equipped(self.owner))
+        bonus = sum(equipment.defense_bonus for equipment in _get_all_equipped(self.owner))
         return self.base_defense + bonus
  
     @property
     def max_hp(self):
-        bonus = sum(equipment.max_hp_bonus for equipment in get_all_equipped(self.owner))
+        bonus = sum(equipment.max_hp_bonus for equipment in _get_all_equipped(self.owner))
         return self.base_max_hp + bonus
  
 class Item(Component):
@@ -109,7 +111,7 @@ class AI(Component):
     def take_turn(self, player):
         self._turn_function(self.owner, player, self._metadata)
 
-def get_all_equipped(obj):
+def _get_all_equipped(obj):
     """
     Returns a list of all equipped items.
     """

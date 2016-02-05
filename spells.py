@@ -1,3 +1,8 @@
+"""
+Spells (magic item effects) and targeting utility functions.
+
+Could be folded into actions.py.
+"""
 import libtcodpy as libtcod
 
 import log
@@ -13,7 +18,7 @@ CONFUSE_RANGE = 8
 FIREBALL_RADIUS = 3
 FIREBALL_DAMAGE = 25
 
-def target_tile(actor, max_range=None):
+def _target_tile(actor, max_range=None):
     """
     Return the position of a tile left-clicked in player's FOV (optionally in a range), or (None,None) if right-clicked.
     """
@@ -34,10 +39,10 @@ def target_tile(actor, max_range=None):
                 (max_range is None or actor.distance(x, y) <= max_range)):
             return (x, y)
  
-def target_monster(actor, max_range=None):
+def _target_monster(actor, max_range=None):
     #returns a clicked monster inside FOV up to a range, or None if right-clicked
     while True:
-        (x, y) = target_tile(actor, max_range)
+        (x, y) = _target_tile(actor, max_range)
         if x is None:  #player cancelled
             return None
  
@@ -46,7 +51,7 @@ def target_monster(actor, max_range=None):
             if obj.x == x and obj.y == y and obj.fighter and obj != actor:
                 return obj
  
-def closest_monster(actor, max_range):
+def _closest_monster(actor, max_range):
     #find closest enemy, up to a maximum range, and in the player's FOV
     closest_enemy = None
     closest_dist = max_range + 1  #start with (slightly more than) maximum range
@@ -72,7 +77,7 @@ def cast_heal(actor):
  
 def cast_lightning(actor):
     #find closest enemy (inside a maximum range) and damage it
-    monster = closest_monster(actor, LIGHTNING_RANGE)
+    monster = _closest_monster(actor, LIGHTNING_RANGE)
     if monster is None:  #no enemy found within maximum range
         log.message('No enemy is close enough to strike.', libtcod.red)
         return 'cancelled'
@@ -84,7 +89,7 @@ def cast_lightning(actor):
  
 def cast_fireball(actor):
     log.message('Left-click a target tile for the fireball, or right-click to cancel.', libtcod.light_cyan)
-    (x, y) = target_tile(actor)
+    (x, y) = _target_tile(actor)
     if x is None: return 'cancelled'
     log.message('The fireball explodes, burning everything within ' + str(FIREBALL_RADIUS) + ' tiles!', libtcod.orange)
  
@@ -95,7 +100,7 @@ def cast_fireball(actor):
  
 def cast_confuse(actor):
     log.message('Left-click an enemy to confuse it, or right-click to cancel.', libtcod.light_cyan)
-    monster = target_monster(actor, CONFUSE_RANGE)
+    monster = _target_monster(actor, CONFUSE_RANGE)
     if monster is None: return 'cancelled'
  
     old_ai = monster.ai

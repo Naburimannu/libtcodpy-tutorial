@@ -1,3 +1,6 @@
+"""
+AI routines, AI data, and monster death.
+"""
 import libtcodpy as libtcod
 
 import log
