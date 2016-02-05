@@ -135,7 +135,7 @@ def player_move_or_attack(player, dx, dy):
             player.current_map.fov_needs_recompute = True
  
 
-def inventory_menu(header):
+def inventory_menu(player, header):
     """
     Show a menu with each item of the inventory as an option.
     """
@@ -166,7 +166,7 @@ def handle_keys(player):
     elif key.vk == libtcod.KEY_ESCAPE:
         return 'exit'  #exit game
  
-    if game_state == 'playing':
+    if player.game_state == 'playing':
         #movement keys
         if key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8:
             player_move_or_attack(player, 0, -1)
@@ -199,13 +199,13 @@ def handle_keys(player):
  
             if key_char == 'i':
                 # show the inventory; if an item is selected, use it
-                chosen_item = inventory_menu('Press the key next to an item to use it, or any other to cancel.\n')
+                chosen_item = inventory_menu(player, 'Press the key next to an item to use it, or any other to cancel.\n')
                 if chosen_item is not None:
                     use(player, chosen_item.owner)
  
             if key_char == 'd':
                 # show the inventory; if an item is selected, drop it
-                chosen_item = inventory_menu('Press the key next to an item to drop it, or any other to cancel.\n')
+                chosen_item = inventory_menu(player, 'Press the key next to an item to drop it, or any other to cancel.\n')
                 if chosen_item is not None:
                     drop(player, chosen_item.owner)
  
@@ -219,21 +219,22 @@ def handle_keys(player):
             if key_char == '<':
                 # go down stairs, if the player is on them
                 if player.current_map.stairs.x == player.x and player.current_map.stairs.y == player.y:
-                    next_level()
+                    next_level(player)
  
             return 'didnt-take-turn'
  
-def check_level_up():
-    #see if the player's experience is enough to level-up
+def check_level_up(player):
+    """
+    If the player's experience is enough, level up immediately.
+    """
     level_up_xp = LEVEL_UP_BASE + player.level * LEVEL_UP_FACTOR
     if player.fighter.xp >= level_up_xp:
-        #it is! level up and ask to raise some stats
         player.level += 1
         player.fighter.xp -= level_up_xp
         log.message('Your battle skills grow stronger! You reached level ' + str(player.level) + '!', libtcod.yellow)
  
         choice = None
-        while choice == None:  #keep asking until a choice is made
+        while choice == None:
             choice = renderer.menu('Level up! Choose a stat to raise:\n',
                           ['Constitution (+20 HP, from ' + str(player.fighter.max_hp) + ')',
                            'Strength (+1 attack, from ' + str(player.fighter.power) + ')',
@@ -248,36 +249,36 @@ def check_level_up():
             player.fighter.base_defense += 1
  
 def player_death(player):
-    #the game ended!
-    global game_state
+    """
+    End the game!
+    """
     log.message('You died!', libtcod.red)
-    game_state = 'dead'
+    player.game_state = 'dead'
  
     #for added effect, transform the player into a corpse!
     player.char = '%'
     player.color = libtcod.dark_red
 
  
-def save_game():
-    global current_map, player, game_state
+def save_game(player):
     """
-    Overwrites any existing data.
+    Save the game to file "savegame";
+    overwrites any existing data.
     """
     file = shelve.open('savegame', 'n')
-    file['current_map'] = current_map
+    file['current_map'] = player.current_map
     file['player_index'] = current_map.objects.index(player)  #index of player in objects list
     file['game_msgs'] = log.game_msgs
-    file['game_state'] = game_state
     file.close()
  
 def load_game():
-    global current_map, player, game_state
- 
+    """
+    Loads from "savegame".
+    """
     file = shelve.open('savegame', 'r')
-    current_map = file['current_map']
+    current_map = file['current_map']  # player will hold our reference to this
     player = current_map.objects[file['player_index']]  #get index of player in objects list and access it
     log.game_msgs = file['game_msgs']
-    game_state = file['game_state']
     file.close()
  
     current_map.initialize_fov()
@@ -285,48 +286,48 @@ def load_game():
     return player
  
 def new_game():
-    global player, current_map, game_state
- 
-    #create object representing the player
+    """
+    Starts a new game, with a default player on level 1 of the dungeon.
+    """
+    # Must initialize the log before we do anything that might emit a message.
+    log.init()
+
     fighter_component = Fighter(hp=100, defense=1, power=2, xp=0, death_function=player_death)
     player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component)
     player.inventory = [] 
     player.level = 1
+    player.game_state = 'playing'
  
-    current_map = cartographer.make_map(player, 1)
-    renderer.clear_console()  #unexplored areas start black (which is the default background color)
-
- 
-    game_state = 'playing'
- 
-    log.init()
- 
-    #a warm welcoming message!
-    log.message('Welcome stranger! Prepare to perish in the Tombs of the Ancient Kings.', libtcod.red)
- 
-    #initial equipment: a dagger
     equipment_component = Equipment(slot='right hand', power_bonus=2)
     obj = Object(0, 0, '-', 'dagger', libtcod.sky, equipment=equipment_component)
     player.inventory.append(obj)
     equip(player, equipment_component)
     obj.always_visible = True
 
+    current_map = cartographer.make_map(player, 1)
+    renderer.clear_console()  #unexplored areas start black (which is the default background color)
+ 
+    log.message('Welcome stranger! Prepare to perish in the Tombs of the Ancient Kings.', libtcod.red)
+
     return player
  
-def next_level():
+def next_level(player):
     """
     Advance to the next level.
+    Heals the player 50%.
     """
-    global current_map
     log.message('You take a moment to rest, and recover your strength.', libtcod.light_violet)
-    actions.heal(player.fighter, player.fighter.max_hp / 2)  #heal the player by 50%
+    actions.heal(player.fighter, player.fighter.max_hp / 2)
  
     log.message('After a rare moment of peace, you descend deeper into the heart of the dungeon...', libtcod.red)
-    current_map = cartographer.make_map(player, current_map.dungeon_level + 1)
-    renderer.clear_console()  #unexplored areas start black (which is the default background color)
+    cartographer.make_map(player, player.current_map.dungeon_level + 1)
+    renderer.clear_console()
 
  
 def play_game(player):
+    """
+    Main loop.
+    """
     player_action = None
  
     ui.init()
@@ -338,19 +339,18 @@ def play_game(player):
 
         libtcod.console_flush()
  
-        check_level_up()
+        check_level_up(player)
  
-        #erase all objects at their old locations, before they move
+        # Erase all objects at their old locations, before they move.
         for object in player.current_map.objects:
             renderer.clear_object(object)
  
-        #handle keys and exit game if needed
         player_action = handle_keys(player)
         if player_action == 'exit':
             save_game()
             break
  
-        if game_state == 'playing' and player_action != 'didnt-take-turn':
+        if player.game_state == 'playing' and player_action != 'didnt-take-turn':
             for object in player.current_map.objects:
                 if object.ai:
                     object.ai.take_turn(player)

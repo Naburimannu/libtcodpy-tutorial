@@ -180,6 +180,11 @@ def _place_objects(new_map, room):
  
  
 def make_map(player, dungeon_level):
+    """
+    Creates a new simple map at the given dungeon level.
+    Sets player.current_map to the new map, and adds the player as the first
+    object.
+    """
     new_map = map.Map(config.MAP_HEIGHT, config.MAP_WIDTH, dungeon_level)
     new_map.objects.append(player)
     player.current_map = new_map
