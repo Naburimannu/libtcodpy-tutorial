@@ -1,7 +1,6 @@
 import math
 
 import log
-import components
 
 def move(o, dx, dy):
     """

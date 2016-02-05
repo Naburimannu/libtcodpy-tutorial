@@ -104,7 +104,10 @@ def _draw_object(o, map, fov_map):
 
  
 def clear_object(o):
-    #erase the character that represents this object
+    """
+    Erase the character that represents this object.
+    """
+    global con
     libtcod.console_put_char(con, o.x, o.y, ' ', libtcod.BKGND_NONE)
 
  
@@ -112,22 +115,21 @@ def menu(header, options, width):
     """
     Display a menu of options headed by letters; return the index [0, 25] of the selection, or None.
     """
+    global con
     if len(options) > 26: raise ValueError('Cannot have a menu with more than 26 options.')
  
-    #calculate total height for the header (after auto-wrap) and one line per option
+    # Calculate total height for the header (after auto-wrap) and one line per option.
     header_height = libtcod.console_get_height_rect(con, 0, 0, width, config.SCREEN_HEIGHT, header)
     if header == '':
         header_height = 0
     height = len(options) + header_height
  
-    #create an off-screen console that represents the menu's window
+    # Create an off-screen console that represents the menu's window.
     window = libtcod.console_new(width, height)
  
-    #print the header, with auto-wrap
     libtcod.console_set_default_foreground(window, libtcod.white)
     libtcod.console_print_rect_ex(window, 0, 0, width, height, libtcod.BKGND_NONE, libtcod.LEFT, header)
  
-    #print all the options
     y = header_height
     letter_index = ord('a')
     for option_text in options:
@@ -136,7 +138,6 @@ def menu(header, options, width):
         y += 1
         letter_index += 1
  
-    #blit the contents of "window" to the root console
     x = config.SCREEN_WIDTH/2 - width/2
     y = config.SCREEN_HEIGHT/2 - height/2
     libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
@@ -148,12 +149,12 @@ def menu(header, options, width):
     if key.vk == libtcod.KEY_ENTER and key.lalt:  #(special case) Alt+Enter: toggle fullscreen
         libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen)
  
-    #convert the ASCII code to an index; if it corresponds to an option, return it
     index = key.c - ord('a')
     if index >= 0 and index < len(options): return index
     return None
  
 def render_all(player, mouse):
+    global con, panel
     global color_dark_wall, color_light_wall
     global color_dark_ground, color_light_ground
  
@@ -189,15 +190,11 @@ def render_all(player, mouse):
             _draw_object(object, current_map, current_map.fov_map)
     _draw_object(player, current_map, current_map.fov_map)
  
-    #blit the contents of "con" to the root console
     libtcod.console_blit(con, 0, 0, config.MAP_WIDTH, config.MAP_HEIGHT, 0, 0, 0)
  
- 
-    #prepare to render the GUI panel
     libtcod.console_set_default_background(panel, libtcod.black)
     libtcod.console_clear(panel)
  
-    #print the game messages, one line at a time
     y = 1
     for (line, color) in log.game_msgs:
         libtcod.console_set_default_foreground(panel, color)

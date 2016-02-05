@@ -8,16 +8,11 @@ import shelve
  
 import config
 import log
-
 from components import *
-import map
 import renderer
-
 import actions
 import ai
 import ui
-
-import spells
 import cartographer
 
 INVENTORY_WIDTH = 50
@@ -30,7 +25,7 @@ LEVEL_UP_FACTOR = 150
 
 def pick_up(actor, o):
     """
-    Add an Object to the player's inventory and remove from the map.
+    Add an Object to the actor's inventory and remove from the map.
     """
     if len(actor.inventory) >= 26:
         log.message(actor.name.capitalize() + ' inventory is full, cannot pick up ' + o.owner.name + '.', libtcod.red)
@@ -46,7 +41,7 @@ def pick_up(actor, o):
  
 def drop(actor, o):
     """
-    Remove an Object from the player's inventory and add it to the map
+    Remove an Object from the actor's inventory and add it to the map
     at the player's coordinates.
     If it's equipment, dequip before dropping.
     """
@@ -62,7 +57,7 @@ def drop(actor, o):
 def use(actor, o):
     """
     If the object has the Equipment component, toggle equip/dequip.
-    Otherwise invoke its use_function and destroy it.
+    Otherwise invoke its use_function and (if not cancelled) destroy it.
     """
     if o.equipment:
         toggle_equip(actor, o.equipment)
@@ -75,14 +70,12 @@ def use(actor, o):
             actor.inventory.remove(o)
  
 
-# takes Equipment
 def toggle_equip(actor, eqp):
     if eqp.is_equipped:
         dequip(actor, eqp)
     else:
         equip(actor, eqp)
  
-# takes Equipment
 def equip(actor, eqp):
     """
     Equip the object (and log).
@@ -95,7 +88,6 @@ def equip(actor, eqp):
     eqp.is_equipped = True
     log.message('Equipped ' + eqp.owner.name + ' on ' + eqp.slot + '.', libtcod.light_green)
  
-# takes Equipment
 def dequip(actor, eqp):
     """
     Dequip the object (and log).
@@ -116,18 +108,16 @@ def get_equipped_in_slot(actor, slot):
  
  
 def player_move_or_attack(player, dx, dy): 
-    #the coordinates the player is moving to/attacking
     x = player.x + dx
     y = player.y + dy
  
-    #try to find an attackable object there
+    # Is there an attackable object?
     target = None
     for object in player.current_map.objects:
         if object.fighter and object.x == x and object.y == y:
             target = object
             break
  
-    #attack if target found, move otherwise
     if target is not None:
         actions.attack(player.fighter, target)
     else:
@@ -157,6 +147,9 @@ def inventory_menu(player, header):
     return player.inventory[index].item
  
 def handle_keys(player):
+    """
+    Returns 'playing', 'didnt-take-turn', or 'exit'.
+    """
     key = ui.key
  
     if key.vk == libtcod.KEY_ENTER and key.lalt:
@@ -225,7 +218,7 @@ def handle_keys(player):
  
 def check_level_up(player):
     """
-    If the player's experience is enough, level up immediately.
+    If the player has enough experience, level up immediately.
     """
     level_up_xp = LEVEL_UP_BASE + player.level * LEVEL_UP_FACTOR
     if player.fighter.xp >= level_up_xp:
@@ -258,7 +251,6 @@ def player_death(player):
     #for added effect, transform the player into a corpse!
     player.char = '%'
     player.color = libtcod.dark_red
-
  
 def save_game(player):
     """
@@ -274,6 +266,7 @@ def save_game(player):
 def load_game():
     """
     Loads from "savegame".
+    Returns the player object.
     """
     file = shelve.open('savegame', 'r')
     current_map = file['current_map']  # player will hold our reference to this
@@ -288,6 +281,7 @@ def load_game():
 def new_game():
     """
     Starts a new game, with a default player on level 1 of the dungeon.
+    Returns the player object.
     """
     # Must initialize the log before we do anything that might emit a message.
     log.init()
@@ -313,7 +307,7 @@ def new_game():
  
 def next_level(player):
     """
-    Advance to the next level.
+    Advance to the next level (changing player.current_map).
     Heals the player 50%.
     """
     log.message('You take a moment to rest, and recover your strength.', libtcod.light_violet)
@@ -347,7 +341,7 @@ def play_game(player):
  
         player_action = handle_keys(player)
         if player_action == 'exit':
-            save_game()
+            save_game(player)
             break
  
         if player.game_state == 'playing' and player_action != 'didnt-take-turn':
