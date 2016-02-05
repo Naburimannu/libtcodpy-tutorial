@@ -35,3 +35,16 @@ def confused_monster(monster, player, metadata):
         monster.ai = metadata.old_ai
         log.message(monster.name.capitalize() + ' is no longer confused!', libtcod.red)
 
+ 
+def monster_death(monster):
+    #transform it into a nasty corpse! it doesn't block, can't be
+    #attacked and doesn't move
+    log.message('The ' + monster.name + ' is dead! You gain ' + str(monster.fighter.xp) + ' experience points.', libtcod.orange)
+    monster.char = '%'
+    monster.color = libtcod.dark_red
+    monster.blocks = False
+    monster.fighter = None
+    monster.ai = None
+    monster.name = 'remains of ' + monster.name
+    monster.current_map.objects.remove(monster)
+    monster.current_map.objects.insert(0, monster)
