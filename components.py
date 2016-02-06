@@ -3,12 +3,14 @@ Simple entity system: any renderable Object can have a number of Components atta
 """
 import math
 
+
 class Object:
     """
     This is a generic object: the player, a monster, an item, the stairs...
     It's always represented by a character on screen.
     """
-    def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, ai=None, item=None, equipment=None):
+    def __init__(self, x, y, char, name, color, blocks=False, always_visible=False,
+                 fighter=None, ai=None, item=None, equipment=None):
         self.x = x
         self.y = y
         self.char = char
@@ -16,31 +18,34 @@ class Object:
         self.color = color
         self.blocks = blocks
         self.always_visible = always_visible
+
         self.fighter = fighter
         self._ensure_ownership(fighter)
- 
         self.ai = ai
         self._ensure_ownership(ai)
- 
         self.item = item
         self._ensure_ownership(item)
- 
         self.equipment = equipment
         self._ensure_ownership(equipment)
- 
+
     def _ensure_ownership(self, component):
         if (component):
             component.set_owner(self)
- 
+
     def distance_to(self, other):
-        #return the distance to another object
+        """
+        Return the distance to another object.
+        """
         dx = other.x - self.x
         dy = other.y - self.y
         return math.sqrt(dx ** 2 + dy ** 2)
- 
+
     def distance(self, x, y):
-        #return the distance to some coordinates
+        """
+        Return the distance to some coordinates.
+        """
         return math.sqrt((x - self.x) ** 2 + (y - self.y) ** 2)
+
 
 class Component:
     """
@@ -48,6 +53,7 @@ class Component:
     """
     def set_owner(self, entity):
         self.owner = entity
+
 
 class Fighter(Component):
     """
@@ -60,29 +66,31 @@ class Fighter(Component):
         self.base_power = power
         self.xp = xp
         self.death_function = death_function
- 
+
     @property
     def power(self):
         bonus = sum(equipment.power_bonus for equipment in _get_all_equipped(self.owner))
         return self.base_power + bonus
- 
+
     @property
     def defense(self):
         bonus = sum(equipment.defense_bonus for equipment in _get_all_equipped(self.owner))
         return self.base_defense + bonus
- 
+
     @property
     def max_hp(self):
         bonus = sum(equipment.max_hp_bonus for equipment in _get_all_equipped(self.owner))
         return self.base_max_hp + bonus
- 
+
+
 class Item(Component):
     """
     An item that can be picked up and used.
     """
     def __init__(self, use_function=None):
         self.use_function = use_function
-  
+
+
 class Equipment(Component):
     """
     An object that can be equipped, yielding bonuses.
@@ -92,24 +100,26 @@ class Equipment(Component):
         self.power_bonus = power_bonus
         self.defense_bonus = defense_bonus
         self.max_hp_bonus = max_hp_bonus
- 
+
         self.slot = slot
         self.is_equipped = False
- 
+
     def set_owner(self, entity):
         Component.set_owner(self, entity)
 
         # There must be an Item component for the Equipment component to work properly.
         entity.item = Item()
         entity.item.set_owner(entity)
- 
+
+
 class AI(Component):
-    def __init__(self, take_turn, metadata = None):
+    def __init__(self, take_turn, metadata=None):
         self._turn_function = take_turn
         self._metadata = metadata
 
     def take_turn(self, player):
         self._turn_function(self.owner, player, self._metadata)
+
 
 def _get_all_equipped(obj):
     """
@@ -123,4 +133,3 @@ def _get_all_equipped(obj):
         return equipped_list
     else:
         return []
- 
