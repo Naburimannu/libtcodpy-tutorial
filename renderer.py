@@ -45,6 +45,16 @@ def log_display(width = 50):
     colored_text_list(log.game_msgs[:25], width)
 
 
+def _write_log(messages, window, x, initial_y):
+    y = initial_y
+    for (line, color, count) in messages:
+        libtcod.console_set_default_foreground(window, color)
+        if count > 1:
+            line += ' (x' + str(count) + ')'
+        libtcod.console_print_ex(window, x, y, libtcod.BKGND_NONE,
+                                 libtcod.LEFT, line)
+        y += 1
+
 def colored_text_list(lines, width):
     """
     Display a series of colored lines of text.
@@ -53,14 +63,7 @@ def colored_text_list(lines, width):
     height = len(lines)
     window = libtcod.console_new(width, height)
 
-    y = 0
-    for (line, color, count) in lines:
-        libtcod.console_set_default_foreground(window, color)
-        if count > 1:
-            line += ' (x' + str(count) + ')'
-        libtcod.console_print_ex(window, 0, y, libtcod.BKGND_NONE,
-                                 libtcod.LEFT, line)
-        y += 1
+    _write_log(lines, window, 0, 0)
 
     x = config.SCREEN_WIDTH/2 - width/2
     y = config.SCREEN_HEIGHT/2 - height/2
@@ -256,17 +259,9 @@ def render_all(player, mouse):
     libtcod.console_set_default_background(_panel, libtcod.black)
     libtcod.console_clear(_panel)
 
-    y = 1
     # Only display the (log.MSG_HEIGHT) most recent
-    for (line, color, count) in log.game_msgs[-log.MSG_HEIGHT:]:
-        libtcod.console_set_default_foreground(_panel, color)
-        if count > 1:
-            line += ' (x' + str(count) + ')'
-        libtcod.console_print_ex(_panel, MSG_X, y, libtcod.BKGND_NONE,
-                                 libtcod.LEFT, line)
-        y += 1
+    _write_log(log.game_msgs[-log.MSG_HEIGHT:], _panel, MSG_X, 1)
 
-    # Show the player's stats.
     _render_bar(1, 1, config.BAR_WIDTH, 'HP', player.fighter.hp,
                 player.fighter.max_hp,
                 libtcod.light_red, libtcod.darker_red)
@@ -274,12 +269,11 @@ def render_all(player, mouse):
         _panel, 1, 3, libtcod.BKGND_NONE,
         libtcod.LEFT, 'Dungeon level ' + str(current_map.dungeon_level))
 
-    # Display names of objects under the mouse.
     libtcod.console_set_default_foreground(_panel, libtcod.light_gray)
     libtcod.console_print_ex(
         _panel, 1, 0, libtcod.BKGND_NONE, libtcod.LEFT,
         _get_names_under_mouse(current_map.objects, current_map.fov_map, mouse))
 
-    # Blit the contents of "_panel" to the root console.
+    # Done with "_panel", blit it to the root console.
     libtcod.console_blit(_panel, 0, 0, config.SCREEN_WIDTH, config.PANEL_HEIGHT,
                          0, 0, PANEL_Y)
