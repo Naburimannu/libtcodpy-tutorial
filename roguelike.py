@@ -81,9 +81,9 @@ def toggle_equip(actor, eqp):
         equip(actor, eqp)
 
 
-def equip(actor, eqp):
+def equip(actor, eqp, report=True):
     """
-    Equip the object (and log).
+    Equip the object (and log unless report=False).
     Ensure only one object per slot.
     """
     old_equipment = get_equipped_in_slot(actor, eqp.slot)
@@ -91,7 +91,8 @@ def equip(actor, eqp):
         dequip(actor, old_equipment)
 
     eqp.is_equipped = True
-    log.message('Equipped ' + eqp.owner.name + ' on ' + eqp.slot + '.', libtcod.light_green)
+    if report is True:
+        log.message('Equipped ' + eqp.owner.name + ' on ' + eqp.slot + '.', libtcod.light_green)
 
 
 def dequip(actor, eqp):
@@ -323,7 +324,7 @@ def new_game():
     equipment_component = Equipment(slot='right hand', power_bonus=2)
     obj = Object(0, 0, '-', 'dagger', libtcod.sky, equipment=equipment_component)
     player.inventory.append(obj)
-    equip(player, equipment_component)
+    equip(player, equipment_component, False)
     obj.always_visible = True
 
     current_map = cartographer.make_map(player, 1)
