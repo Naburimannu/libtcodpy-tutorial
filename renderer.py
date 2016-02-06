@@ -22,12 +22,12 @@ def renderer_init():
     """
     Initialize libtcod and set up our basic consoles to draw into.
     """
-    global con, panel
-    libtcod.console_set_custom_font('arial10x10.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
+    global _con, _panel
+    libtcod.console_set_custom_font('arial12x12.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
     libtcod.console_init_root(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, 'python/libtcod tutorial', False)
     libtcod.sys_set_fps(LIMIT_FPS)
-    con = libtcod.console_new(config.MAP_WIDTH, config.MAP_HEIGHT)
-    panel = libtcod.console_new(config.SCREEN_WIDTH, config.PANEL_HEIGHT)
+    _con = libtcod.console_new(config.MAP_WIDTH, config.MAP_HEIGHT)
+    _panel = libtcod.console_new(config.SCREEN_WIDTH, config.PANEL_HEIGHT)
 
  
 def msgbox(text, width=50):
@@ -60,24 +60,24 @@ def main_menu(new_game, play_game, load_game):
             break
 
 def clear_console():
-    libtcod.console_clear(con)
+    libtcod.console_clear(_con)
 
 def _render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
     #render a bar (HP, experience, etc). first calculate the width of the bar
     bar_width = int(float(value) / maximum * total_width)
  
     #render the background first
-    libtcod.console_set_default_background(panel, back_color)
-    libtcod.console_rect(panel, x, y, total_width, 1, False, libtcod.BKGND_SCREEN)
+    libtcod.console_set_default_background(_panel, back_color)
+    libtcod.console_rect(_panel, x, y, total_width, 1, False, libtcod.BKGND_SCREEN)
  
     #now render the bar on top
-    libtcod.console_set_default_background(panel, bar_color)
+    libtcod.console_set_default_background(_panel, bar_color)
     if bar_width > 0:
-        libtcod.console_rect(panel, x, y, bar_width, 1, False, libtcod.BKGND_SCREEN)
+        libtcod.console_rect(_panel, x, y, bar_width, 1, False, libtcod.BKGND_SCREEN)
  
     #finally, some centered text with the values
-    libtcod.console_set_default_foreground(panel, libtcod.white)
-    libtcod.console_print_ex(panel, x + total_width / 2, y, libtcod.BKGND_NONE, libtcod.CENTER,
+    libtcod.console_set_default_foreground(_panel, libtcod.white)
+    libtcod.console_print_ex(_panel, x + total_width / 2, y, libtcod.BKGND_NONE, libtcod.CENTER,
                                  name + ': ' + str(value) + '/' + str(maximum))
  
 
@@ -99,27 +99,27 @@ def _draw_object(o, map, fov_map):
     if (libtcod.map_is_in_fov(fov_map, o.x, o.y) or
             (o.always_visible and map.explored[o.x][o.y])):
         #set the color and then draw the character that represents this object at its position
-        libtcod.console_set_default_foreground(con, o.color)
-        libtcod.console_put_char(con, o.x, o.y, o.char, libtcod.BKGND_NONE)
+        libtcod.console_set_default_foreground(_con, o.color)
+        libtcod.console_put_char(_con, o.x, o.y, o.char, libtcod.BKGND_NONE)
 
  
 def clear_object(o):
     """
     Erase the character that represents this object.
     """
-    global con
-    libtcod.console_put_char(con, o.x, o.y, ' ', libtcod.BKGND_NONE)
+    global _con
+    libtcod.console_put_char(_con, o.x, o.y, ' ', libtcod.BKGND_NONE)
 
  
 def menu(header, options, width):
     """
     Display a menu of options headed by letters; return the index [0, 25] of the selection, or None.
     """
-    global con
+    global _con
     if len(options) > 26: raise ValueError('Cannot have a menu with more than 26 options.')
  
     # Calculate total height for the header (after auto-wrap) and one line per option.
-    header_height = libtcod.console_get_height_rect(con, 0, 0, width, config.SCREEN_HEIGHT, header)
+    header_height = libtcod.console_get_height_rect(_con, 0, 0, width, config.SCREEN_HEIGHT, header)
     if header == '':
         header_height = 0
     height = len(options) + header_height
@@ -154,7 +154,7 @@ def menu(header, options, width):
     return None
  
 def render_all(player, mouse):
-    global con, panel
+    global _con, _panel
     global color_dark_wall, color_light_wall
     global color_dark_ground, color_light_ground
  
@@ -172,14 +172,14 @@ def render_all(player, mouse):
                     #if it's not visible right now, the player can only see it if it's explored
                     if current_map.explored[x][y]:
                         if wall:
-                            libtcod.console_set_char_background(con, x, y, color_dark_wall, libtcod.BKGND_SET)
+                            libtcod.console_set_char_background(_con, x, y, color_dark_wall, libtcod.BKGND_SET)
                         else:
-                            libtcod.console_set_char_background(con, x, y, color_dark_ground, libtcod.BKGND_SET)
+                            libtcod.console_set_char_background(_con, x, y, color_dark_ground, libtcod.BKGND_SET)
                 else:
                     if wall:
-                        libtcod.console_set_char_background(con, x, y, color_light_wall, libtcod.BKGND_SET )
+                        libtcod.console_set_char_background(_con, x, y, color_light_wall, libtcod.BKGND_SET )
                     else:
-                        libtcod.console_set_char_background(con, x, y, color_light_ground, libtcod.BKGND_SET )
+                        libtcod.console_set_char_background(_con, x, y, color_light_ground, libtcod.BKGND_SET )
                         #since it's visible, explore it
                     current_map.explored[x][y] = True
  
@@ -190,26 +190,26 @@ def render_all(player, mouse):
             _draw_object(object, current_map, current_map.fov_map)
     _draw_object(player, current_map, current_map.fov_map)
  
-    libtcod.console_blit(con, 0, 0, config.MAP_WIDTH, config.MAP_HEIGHT, 0, 0, 0)
+    libtcod.console_blit(_con, 0, 0, config.MAP_WIDTH, config.MAP_HEIGHT, 0, 0, 0)
  
-    libtcod.console_set_default_background(panel, libtcod.black)
-    libtcod.console_clear(panel)
+    libtcod.console_set_default_background(_panel, libtcod.black)
+    libtcod.console_clear(_panel)
  
     y = 1
     for (line, color) in log.game_msgs:
-        libtcod.console_set_default_foreground(panel, color)
-        libtcod.console_print_ex(panel, MSG_X, y, libtcod.BKGND_NONE, libtcod.LEFT,line)
+        libtcod.console_set_default_foreground(_panel, color)
+        libtcod.console_print_ex(_panel, MSG_X, y, libtcod.BKGND_NONE, libtcod.LEFT,line)
         y += 1
  
     #show the player's stats
     _render_bar(1, 1, config.BAR_WIDTH, 'HP', player.fighter.hp, player.fighter.max_hp,
                libtcod.light_red, libtcod.darker_red)
-    libtcod.console_print_ex(panel, 1, 3, libtcod.BKGND_NONE, libtcod.LEFT, 'Dungeon level ' + str(current_map.dungeon_level))
+    libtcod.console_print_ex(_panel, 1, 3, libtcod.BKGND_NONE, libtcod.LEFT, 'Dungeon level ' + str(current_map.dungeon_level))
  
     #display names of objects under the mouse
-    libtcod.console_set_default_foreground(panel, libtcod.light_gray)
-    libtcod.console_print_ex(panel, 1, 0, libtcod.BKGND_NONE, libtcod.LEFT, _get_names_under_mouse(current_map.objects, current_map.fov_map, mouse))
+    libtcod.console_set_default_foreground(_panel, libtcod.light_gray)
+    libtcod.console_print_ex(_panel, 1, 0, libtcod.BKGND_NONE, libtcod.LEFT, _get_names_under_mouse(current_map.objects, current_map.fov_map, mouse))
  
     #blit the contents of "panel" to the root console
-    libtcod.console_blit(panel, 0, 0, config.SCREEN_WIDTH, config.PANEL_HEIGHT, 0, 0, PANEL_Y)
+    libtcod.console_blit(_panel, 0, 0, config.SCREEN_WIDTH, config.PANEL_HEIGHT, 0, 0, PANEL_Y)
  
