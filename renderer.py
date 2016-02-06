@@ -255,7 +255,8 @@ def render_all(player, mouse):
     libtcod.console_clear(_panel)
 
     y = 1
-    for (line, color) in log.game_msgs:
+    # Only display the (log.MSG_HEIGHT) most recent
+    for (line, color) in log.game_msgs[-log.MSG_HEIGHT:]:
         libtcod.console_set_default_foreground(_panel, color)
         libtcod.console_print_ex(_panel, MSG_X, y, libtcod.BKGND_NONE,
                                  libtcod.LEFT, line)
