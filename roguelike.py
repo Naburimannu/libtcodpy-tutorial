@@ -168,6 +168,9 @@ def handle_keys(player):
     elif key.vk == libtcod.KEY_ESCAPE:
         return 'exit'
 
+    elif chr(key.c) == 'p' and (key.lctrl or key.rctrl):
+        renderer.log_display()
+
     if player.game_state == 'playing':
         # movement keys
         if key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8:

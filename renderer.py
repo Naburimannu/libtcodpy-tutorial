@@ -37,6 +37,13 @@ def msgbox(text, width=50):
     menu(text, [], width)
 
 
+def log_display(width = 50):
+    """
+    Display the recent log history, wait for any keypress.
+    menu() 
+    """
+    menu('\n'.join(msg[0] for msg in log.game_msgs[:25]), [], width)
+
 def main_menu(new_game, play_game, load_game):
     """
     Prompt the player to start a new game, continue playing the last game,
@@ -150,9 +157,12 @@ def menu(header, options, width):
     y = config.SCREEN_HEIGHT/2 - height/2
     libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
 
-    # Present the root console to the player and wait for a key-press.
     libtcod.console_flush()
-    key = libtcod.console_wait_for_keypress(True)
+    while True:
+        key = libtcod.console_wait_for_keypress(True)
+        if not (key.vk == libtcod.KEY_ALT or key.vk == libtcod.KEY_CONTROL or
+                key.vk == libtcod.KEY_SHIFT):
+            break;
 
     index = key.c - ord('a')
     if index >= 0 and index < len(options):
