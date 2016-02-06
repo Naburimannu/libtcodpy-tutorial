@@ -42,7 +42,36 @@ def log_display(width = 50):
     Display the recent log history, wait for any keypress.
     menu() 
     """
-    menu('\n'.join(msg[0] for msg in log.game_msgs[:25]), [], width)
+    colored_text_list(log.game_msgs[:25], width)
+
+
+def colored_text_list(lines, width):
+    """
+    Display a series of colored lines of text.
+    """
+    # Create an off-screen console that represents the menu's window.
+    height = len(lines)
+    window = libtcod.console_new(width, height)
+
+    y = 0
+    for (line, color) in lines:
+        libtcod.console_set_default_foreground(window, color)
+        libtcod.console_print_ex(window, 0, y, libtcod.BKGND_NONE,
+                                 libtcod.LEFT, line)
+        y += 1
+
+    x = config.SCREEN_WIDTH/2 - width/2
+    y = config.SCREEN_HEIGHT/2 - height/2
+    print(width, height, x, y)
+    libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
+
+    libtcod.console_flush()
+    while True:
+        key = libtcod.console_wait_for_keypress(True)
+        if not (key.vk == libtcod.KEY_ALT or key.vk == libtcod.KEY_CONTROL or
+                key.vk == libtcod.KEY_SHIFT):
+            break;
+
 
 def main_menu(new_game, play_game, load_game):
     """
@@ -79,6 +108,7 @@ def main_menu(new_game, play_game, load_game):
 
 
 def clear_console():
+    global _con
     libtcod.console_clear(_con)
 
 
@@ -111,6 +141,7 @@ def _get_names_under_mouse(objects, fov_map, mouse):
 def _draw_object(o, map, fov_map):
     # Show if it's visible to the player
     # or it's set to "always visible" and on an explored tile.
+    global _con
     if (libtcod.map_is_in_fov(fov_map, o.x, o.y) or
             (o.always_visible and map.explored[o.x][o.y])):
         libtcod.console_set_default_foreground(_con, o.color)
