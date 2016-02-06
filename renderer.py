@@ -54,8 +54,10 @@ def colored_text_list(lines, width):
     window = libtcod.console_new(width, height)
 
     y = 0
-    for (line, color) in lines:
+    for (line, color, count) in lines:
         libtcod.console_set_default_foreground(window, color)
+        if count > 1:
+            line += ' (x' + str(count) + ')'
         libtcod.console_print_ex(window, 0, y, libtcod.BKGND_NONE,
                                  libtcod.LEFT, line)
         y += 1
@@ -256,8 +258,10 @@ def render_all(player, mouse):
 
     y = 1
     # Only display the (log.MSG_HEIGHT) most recent
-    for (line, color) in log.game_msgs[-log.MSG_HEIGHT:]:
+    for (line, color, count) in log.game_msgs[-log.MSG_HEIGHT:]:
         libtcod.console_set_default_foreground(_panel, color)
+        if count > 1:
+            line += ' (x' + str(count) + ')'
         libtcod.console_print_ex(_panel, MSG_X, y, libtcod.BKGND_NONE,
                                  libtcod.LEFT, line)
         y += 1
