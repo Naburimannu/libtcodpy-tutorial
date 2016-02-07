@@ -9,6 +9,7 @@ import log
 import components
 import actions
 import ui
+import renderer
 
 HEAL_AMOUNT = 40
 LIGHTNING_DAMAGE = 40

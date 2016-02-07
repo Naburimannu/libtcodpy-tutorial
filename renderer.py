@@ -37,12 +37,12 @@ def msgbox(text, width=50):
     menu(text, [], width)
 
 
-def log_display(width = 50):
+def log_display(width=60):
     """
     Display the recent log history, wait for any keypress.
     menu() 
     """
-    colored_text_list(log.game_msgs[:25], width)
+    colored_text_list(log.game_msgs[-25:], width)
 
 
 def _write_log(messages, window, x, initial_y):
