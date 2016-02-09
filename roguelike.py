@@ -161,6 +161,7 @@ def handle_keys(player):
     Returns 'playing', 'didnt-take-turn', or 'exit'.
     """
     key = ui.key
+    key_char = chr(key.c)
 
     if key.vk == libtcod.KEY_ENTER and key.lalt:
         # Alt+Enter: toggle fullscreen
@@ -169,33 +170,39 @@ def handle_keys(player):
     elif key.vk == libtcod.KEY_ESCAPE:
         return 'exit'
 
-    elif chr(key.c) == 'p' and (key.lctrl or key.rctrl):
+    elif key_char == 'p' and (key.lctrl or key.rctrl):
         renderer.log_display()
 
     if player.game_state == 'playing':
         # movement keys
-        if key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8:
+        if (key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8 or
+            key_char == 'k'):
             player_move_or_attack(player, 0, -1)
-        elif key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2:
+        elif (key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2 or
+             key_char == 'j'):
             player_move_or_attack(player, 0, 1)
-        elif key.vk == libtcod.KEY_LEFT or key.vk == libtcod.KEY_KP4:
+        elif (key.vk == libtcod.KEY_LEFT or key.vk == libtcod.KEY_KP4 or
+             key_char == 'h'):
             player_move_or_attack(player, -1, 0)
-        elif key.vk == libtcod.KEY_RIGHT or key.vk == libtcod.KEY_KP6:
+        elif (key.vk == libtcod.KEY_RIGHT or key.vk == libtcod.KEY_KP6 or
+             key_char == 'l'):
             player_move_or_attack(player, 1, 0)
-        elif key.vk == libtcod.KEY_HOME or key.vk == libtcod.KEY_KP7:
+        elif (key.vk == libtcod.KEY_HOME or key.vk == libtcod.KEY_KP7 or
+             key_char == 'y'):
             player_move_or_attack(player, -1, -1)
-        elif key.vk == libtcod.KEY_PAGEUP or key.vk == libtcod.KEY_KP9:
+        elif (key.vk == libtcod.KEY_PAGEUP or key.vk == libtcod.KEY_KP9 or
+             key_char == 'u'):
             player_move_or_attack(player, 1, -1)
-        elif key.vk == libtcod.KEY_END or key.vk == libtcod.KEY_KP1:
+        elif (key.vk == libtcod.KEY_END or key.vk == libtcod.KEY_KP1 or
+             key_char == 'b'):
             player_move_or_attack(player, -1, 1)
-        elif key.vk == libtcod.KEY_PAGEDOWN or key.vk == libtcod.KEY_KP3:
+        elif (key.vk == libtcod.KEY_PAGEDOWN or key.vk == libtcod.KEY_KP3
+             or key_char == 'n'):
             player_move_or_attack(player, 1, 1)
-        elif key.vk == libtcod.KEY_KP5:
+        elif (key.vk == libtcod.KEY_KP5 or key_char == ' '):
             # do nothing
             pass
         else:
-            # test for other keys
-            key_char = chr(key.c)
 
             if key_char == 'g':
                 # pick up an item
