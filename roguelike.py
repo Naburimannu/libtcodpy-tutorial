@@ -374,7 +374,7 @@ def play_game(player):
 
         # Erase all objects at their old locations, before they move.
         for object in player.current_map.objects:
-            renderer.clear_object(player.current_map, object)
+            renderer.clear_object(player, object)
 
         player_action = handle_keys(player)
         if player_action == 'exit':

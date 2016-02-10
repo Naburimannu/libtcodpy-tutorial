@@ -176,8 +176,8 @@ def make_map(player, dungeon_level):
     """
     new_map = map.Map(config.MAP_HEIGHT, config.MAP_WIDTH, dungeon_level)
     new_map.objects.append(player)
-    new_map.camera_position = (0, 0)
     player.current_map = new_map
+    player.camera_position = (0, 0)
 
     rooms = []
     num_rooms = 0
@@ -206,7 +206,7 @@ def make_map(player, dungeon_level):
                 # This is the first room, where the player starts.
                 player.x = new_x
                 player.y = new_y
-                renderer.move_camera(new_map, new_x, new_y)
+                renderer.update_camera(player)
             else:
                 # Connect it to the previous room with a tunnel.
                 (prev_x, prev_y) = rooms[num_rooms-1].center()

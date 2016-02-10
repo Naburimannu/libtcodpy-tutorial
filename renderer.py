@@ -18,6 +18,21 @@ MSG_X = config.BAR_WIDTH + 2
 LIMIT_FPS = 20
 
 
+class ScreenCoords(tuple):
+    @staticmethod
+    def fromWorldCoords(camera_coords, world_coords):
+        x = world_coords[0] - camera_coords[0]
+        y = world_coords[1] - camera_coords[1]
+        if (x < 0 or y < 0 or x >= config.MAP_PANEL_WIDTH or y >= config.MAP_PANEL_HEIGHT):
+            return ScreenCoords((None, None))
+        return ScreenCoords((x, y))
+
+    @staticmethod
+    def toWorldCoords(camera_coords, screen_coords):
+        x = screen_coords[0] + camera_coords[0]
+        y = screen_coords[1] + camera_coords[1]
+        return (x, y)
+
 def renderer_init():
     """
     Initialize libtcod and set up our basic consoles to draw into.
@@ -57,7 +72,7 @@ def _write_log(messages, window, x, initial_y):
 
 def colored_text_list(lines, width):
     """
-    Display a series of colored lines of text.
+    Display *lines* of (text, color) in a window of size *width*.
     """
     # Create an off-screen console that represents the menu's window.
     height = len(lines)
@@ -142,23 +157,23 @@ def _get_names_under_mouse(objects, fov_map, mouse):
     return names.capitalize()
 
 
-def _draw_object(o, map, fov_map):
+def _draw_object(o, player):
     # Show if it's visible to the player
     # or it's set to "always visible" and on an explored tile.
     global _con
-    if (libtcod.map_is_in_fov(fov_map, o.x, o.y) or
-            (o.always_visible and map.explored[o.x][o.y])):
+    if (libtcod.map_is_in_fov(player.current_map.fov_map, o.x, o.y) or
+            (o.always_visible and player.current_map.explored[o.x][o.y])):
         libtcod.console_set_default_foreground(_con, o.color)
-        (x, y) = to_camera_coordinates(map, o.x, o.y)
+        (x, y) = to_camera_coordinates(player, o.x, o.y)
         libtcod.console_put_char(_con, x, y, o.char, libtcod.BKGND_NONE)
 
 
-def clear_object(map, o):
+def clear_object(player, o):
     """
     Erase the character that represents this object.
     """
     global _con
-    (x, y) = to_camera_coordinates(map, o.x, o.y)
+    (x, y) = to_camera_coordinates(player, o.x, o.y)
     libtcod.console_put_char(_con, x, y, ' ', libtcod.BKGND_NONE)
 
 
@@ -211,12 +226,13 @@ def _set(con, x, y, color, mode):
     libtcod.console_set_char_background(con, x, y, color, mode)
 
 
-def _draw_fov(current_map):
+def _draw_fov(player):
     libtcod.console_clear(_con)
+    current_map = player.current_map
     for y in range(config.MAP_PANEL_HEIGHT):
         for x in range(config.MAP_PANEL_WIDTH):
-            (map_x, map_y) = (current_map.camera_position[0] + x,
-                              current_map.camera_position[1] + y)
+            (map_x, map_y) = (player.camera_position[0] + x,
+                              player.camera_position[1] + y)
             visible = libtcod.map_is_in_fov(current_map.fov_map, map_x, map_y)
             wall = current_map.block_sight[map_x][map_y]
             if not visible:
@@ -233,9 +249,9 @@ def _draw_fov(current_map):
                     _set(_con, x, y, color_light_ground, libtcod.BKGND_SET)
                 current_map.explored[map_x][map_y] = True
 
-def move_camera(current_map, target_x, target_y):
-    x = target_x - config.MAP_PANEL_WIDTH / 2
-    y = target_y - config.MAP_PANEL_HEIGHT / 2
+def update_camera(player):
+    x = player.x - config.MAP_PANEL_WIDTH / 2
+    y = player.y - config.MAP_PANEL_HEIGHT / 2
 
     # Make sure the camera doesn't see outside the map.
     if x < 0: x = 0
@@ -245,17 +261,17 @@ def move_camera(current_map, target_x, target_y):
     if y > config.MAP_HEIGHT - config.MAP_PANEL_HEIGHT - 1:
         y = config.MAP_HEIGHT - config.MAP_PANEL_HEIGHT - 1
 
-    if (x, y) != current_map.camera_position:
-        current_map.fov_needs_recompute = True
+    if (x, y) != player.camera_position:
+        player.current_map.fov_needs_recompute = True
 
-    current_map.camera_position = (x, y)
+    player.camera_position = (x, y)
 
 
-def to_camera_coordinates(current_map, x, y):
+def to_camera_coordinates(player, x, y):
     """
     Convert coordinates on the map to coordinates on the screen.
     """
-    (x, y) = (x - current_map.camera_position[0], y - current_map.camera_position[1])
+    (x, y) = (x - player.camera_position[0], y - player.camera_position[1])
 
     if (x < 0 or y < 0 or x >= config.MAP_PANEL_WIDTH or y >= config.MAP_PANEL_HEIGHT):
         return (None, None)
@@ -269,7 +285,7 @@ def render_all(player, mouse):
     global color_dark_ground, color_light_ground
 
     current_map = player.current_map
-    move_camera(current_map, player.x, player.y)
+    update_camera(player)
 
     if current_map.fov_needs_recompute:
         # Recompute FOV if needed (the player moved or something in
@@ -277,7 +293,7 @@ def render_all(player, mouse):
         libtcod.map_compute_fov(
             current_map.fov_map, player.x,
             player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO)
-        _draw_fov(current_map)
+        _draw_fov(player)
 
     # Draw all objects in the list, except the player. We want it to
     # always appear over all other objects, so it's drawn later.
@@ -285,8 +301,8 @@ def render_all(player, mouse):
     # the last object in current_map.objects.)
     for object in current_map.objects:
         if object != player:
-            _draw_object(object, current_map, current_map.fov_map)
-    _draw_object(player, current_map, current_map.fov_map)
+            _draw_object(object, player)
+    _draw_object(player, player)
 
     libtcod.console_blit(_con, 0, 0, config.MAP_PANEL_WIDTH,
                          config.MAP_PANEL_HEIGHT, 0, 0, 0)
