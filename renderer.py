@@ -257,10 +257,10 @@ def update_camera(player):
     # Make sure the camera doesn't see outside the map.
     if x < 0: x = 0
     if y < 0: y = 0
-    if x > config.MAP_WIDTH - config.MAP_PANEL_WIDTH - 1:
-        x = config.MAP_WIDTH - config.MAP_PANEL_WIDTH - 1
-    if y > config.MAP_HEIGHT - config.MAP_PANEL_HEIGHT - 1:
-        y = config.MAP_HEIGHT - config.MAP_PANEL_HEIGHT - 1
+    if x > config.MAP_WIDTH - config.MAP_PANEL_WIDTH:
+        x = config.MAP_WIDTH - config.MAP_PANEL_WIDTH
+    if y > config.MAP_HEIGHT - config.MAP_PANEL_HEIGHT:
+        y = config.MAP_HEIGHT - config.MAP_PANEL_HEIGHT
 
     if (x, y) != player.camera_position:
         player.current_map.fov_needs_recompute = True

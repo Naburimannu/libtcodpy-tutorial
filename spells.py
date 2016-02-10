@@ -6,9 +6,10 @@ Could be folded into actions.py.
 import libtcodpy as libtcod
 
 import log
-import components
+from components import *
 import actions
 import ui
+import ai
 import renderer
 
 HEAL_AMOUNT = 40
