@@ -334,7 +334,7 @@ def new_game():
     equip(player, equipment_component, False)
     obj.always_visible = True
 
-    current_map = cartographer.make_map(player, 1)
+    cartographer.make_map(player, 1)
     renderer.clear_console()
 
     log.message('Welcome stranger! Prepare to perish in the Tombs of the Ancient Kings.', libtcod.red)
@@ -374,7 +374,7 @@ def play_game(player):
 
         # Erase all objects at their old locations, before they move.
         for object in player.current_map.objects:
-            renderer.clear_object(object)
+            renderer.clear_object(player.current_map, object)
 
         player_action = handle_keys(player)
         if player_action == 'exit':

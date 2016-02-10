@@ -26,7 +26,7 @@ def renderer_init():
     libtcod.console_set_custom_font('arial12x12.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
     libtcod.console_init_root(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, 'python/libtcod tutorial', False)
     libtcod.sys_set_fps(LIMIT_FPS)
-    _con = libtcod.console_new(config.MAP_WIDTH, config.MAP_HEIGHT)
+    _con = libtcod.console_new(config.MAP_PANEL_WIDTH, config.MAP_PANEL_HEIGHT)
     _panel = libtcod.console_new(config.SCREEN_WIDTH, config.PANEL_HEIGHT)
 
 
@@ -67,7 +67,6 @@ def colored_text_list(lines, width):
 
     x = config.SCREEN_WIDTH/2 - width/2
     y = config.SCREEN_HEIGHT/2 - height/2
-    print(width, height, x, y)
     libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
 
     libtcod.console_flush()
@@ -150,15 +149,17 @@ def _draw_object(o, map, fov_map):
     if (libtcod.map_is_in_fov(fov_map, o.x, o.y) or
             (o.always_visible and map.explored[o.x][o.y])):
         libtcod.console_set_default_foreground(_con, o.color)
-        libtcod.console_put_char(_con, o.x, o.y, o.char, libtcod.BKGND_NONE)
+        (x, y) = to_camera_coordinates(map, o.x, o.y)
+        libtcod.console_put_char(_con, x, y, o.char, libtcod.BKGND_NONE)
 
 
-def clear_object(o):
+def clear_object(map, o):
     """
     Erase the character that represents this object.
     """
     global _con
-    libtcod.console_put_char(_con, o.x, o.y, ' ', libtcod.BKGND_NONE)
+    (x, y) = to_camera_coordinates(map, o.x, o.y)
+    libtcod.console_put_char(_con, x, y, ' ', libtcod.BKGND_NONE)
 
 
 def menu(header, options, width):
@@ -211,13 +212,16 @@ def _set(con, x, y, color, mode):
 
 
 def _draw_fov(current_map):
-    for y in range(current_map.height):
-        for x in range(current_map.width):
-            visible = libtcod.map_is_in_fov(current_map.fov_map, x, y)
-            wall = current_map.block_sight[x][y]
+    libtcod.console_clear(_con)
+    for y in range(config.MAP_PANEL_HEIGHT):
+        for x in range(config.MAP_PANEL_WIDTH):
+            (map_x, map_y) = (current_map.camera_position[0] + x,
+                              current_map.camera_position[1] + y)
+            visible = libtcod.map_is_in_fov(current_map.fov_map, map_x, map_y)
+            wall = current_map.block_sight[map_x][map_y]
             if not visible:
                 # If it's not visible, only draw if it's explored
-                if current_map.explored[x][y]:
+                if current_map.explored[map_x][map_y]:
                     if wall:
                         _set(_con, x, y, color_dark_wall, libtcod.BKGND_SET)
                     else:
@@ -227,7 +231,36 @@ def _draw_fov(current_map):
                     _set(_con, x, y, color_light_wall, libtcod.BKGND_SET)
                 else:
                     _set(_con, x, y, color_light_ground, libtcod.BKGND_SET)
-                current_map.explored[x][y] = True
+                current_map.explored[map_x][map_y] = True
+
+def move_camera(current_map, target_x, target_y):
+    x = target_x - config.MAP_PANEL_WIDTH / 2
+    y = target_y - config.MAP_PANEL_HEIGHT / 2
+
+    # Make sure the camera doesn't see outside the map.
+    if x < 0: x = 0
+    if y < 0: y = 0
+    if x > config.MAP_WIDTH - config.MAP_PANEL_WIDTH - 1:
+        x = config.MAP_WIDTH - config.MAP_PANEL_WIDTH - 1
+    if y > config.MAP_HEIGHT - config.MAP_PANEL_HEIGHT - 1:
+        y = config.MAP_HEIGHT - config.MAP_PANEL_HEIGHT - 1
+
+    if (x, y) != current_map.camera_position:
+        current_map.fov_needs_recompute = True
+
+    current_map.camera_position = (x, y)
+
+
+def to_camera_coordinates(current_map, x, y):
+    """
+    Convert coordinates on the map to coordinates on the screen.
+    """
+    (x, y) = (x - current_map.camera_position[0], y - current_map.camera_position[1])
+
+    if (x < 0 or y < 0 or x >= config.MAP_PANEL_WIDTH or y >= config.MAP_PANEL_HEIGHT):
+        return (None, None)
+
+    return (x, y)
 
 
 def render_all(player, mouse):
@@ -236,6 +269,8 @@ def render_all(player, mouse):
     global color_dark_ground, color_light_ground
 
     current_map = player.current_map
+    move_camera(current_map, player.x, player.y)
+
     if current_map.fov_needs_recompute:
         # Recompute FOV if needed (the player moved or something in
         # the dungeon changed).
@@ -253,8 +288,8 @@ def render_all(player, mouse):
             _draw_object(object, current_map, current_map.fov_map)
     _draw_object(player, current_map, current_map.fov_map)
 
-    libtcod.console_blit(_con, 0, 0, config.MAP_WIDTH,
-                         config.MAP_HEIGHT, 0, 0, 0)
+    libtcod.console_blit(_con, 0, 0, config.MAP_PANEL_WIDTH,
+                         config.MAP_PANEL_HEIGHT, 0, 0, 0)
 
     libtcod.console_set_default_background(_panel, libtcod.black)
     libtcod.console_clear(_panel)
