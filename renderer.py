@@ -148,8 +148,9 @@ def _render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
         name + ': ' + str(value) + '/' + str(maximum))
 
 
-def _get_names_under_mouse(objects, fov_map, mouse):
-    (x, y) = (mouse.cx, mouse.cy)
+def _get_names_under_mouse(player, objects, fov_map, mouse):
+    (x, y) = ScreenCoords.toWorldCoords(player.camera_position,
+                                        (mouse.cx, mouse.cy))
 
     names = [obj.name for obj in objects
              if obj.x == x and obj.y == y and libtcod.map_is_in_fov(fov_map, obj.x, obj.y)]
@@ -268,6 +269,20 @@ def update_camera(player):
     player.camera_position = (x, y)
 
 
+def _debug_positions(player, mouse):
+    global _panel
+    libtcod.console_print_ex(
+        _panel, 1, 4, libtcod.BKGND_NONE,
+        libtcod.LEFT, '  @x ' + str(player.x) + ' y ' + str(player.y))
+    libtcod.console_print_ex(
+        _panel, 1, 5, libtcod.BKGND_NONE,
+        libtcod.LEFT, '  mx ' + str(mouse.cx) + ' y ' + str(mouse.cy))
+    libtcod.console_print_ex(
+        _panel, 1, 6, libtcod.BKGND_NONE,
+        libtcod.LEFT, 'camx ' + str(player.camera_position[0]) +
+                      ' y ' + str(player.camera_position[1]))
+
+
 def render_all(player, mouse):
     global _con, _panel
     global color_dark_wall, color_light_wall
@@ -308,11 +323,12 @@ def render_all(player, mouse):
     libtcod.console_print_ex(
         _panel, 1, 3, libtcod.BKGND_NONE,
         libtcod.LEFT, 'Dungeon level ' + str(current_map.dungeon_level))
+    _debug_positions(player, mouse)
 
     libtcod.console_set_default_foreground(_panel, libtcod.light_gray)
     libtcod.console_print_ex(
         _panel, 1, 0, libtcod.BKGND_NONE, libtcod.LEFT,
-        _get_names_under_mouse(current_map.objects, current_map.fov_map, mouse))
+        _get_names_under_mouse(player, current_map.objects, current_map.fov_map, mouse))
 
     # Done with "_panel", blit it to the root console.
     libtcod.console_blit(_panel, 0, 0, config.SCREEN_WIDTH, config.PANEL_HEIGHT,

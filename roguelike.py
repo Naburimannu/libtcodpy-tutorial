@@ -30,7 +30,7 @@ def pick_up(actor, o):
     """
     if len(actor.inventory) >= 26:
         log.message(actor.name.capitalize() + ' inventory is full, cannot pick up ' +
-                    o.owner.name + '.', libtcod.red)
+                    o.name + '.', libtcod.red)
     else:
         actor.inventory.append(o)
         actor.current_map.objects.remove(o)

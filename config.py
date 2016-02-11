@@ -12,8 +12,8 @@ MAP_PANEL_HEIGHT = 43
 
 # Size of the actual map; if larger than the map panel, the map panel will
 # scroll as the player moves.
-MAP_WIDTH = 80
-MAP_HEIGHT = 43
+MAP_WIDTH = 120
+MAP_HEIGHT = 63
 
 # Height of the HUD display (should be screen height - map display height)
 PANEL_HEIGHT = 7

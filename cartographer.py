@@ -12,7 +12,7 @@ ROOM_MIN_SIZE = 6
 MAX_ROOMS = 30
 
 
-class Rect:
+class Rect(object):
     """
     A rectangle on the map. used to characterize a room.
     """
@@ -33,6 +33,16 @@ class Rect:
         """
         return (self.x1 <= other.x2 and self.x2 >= other.x1 and
                 self.y1 <= other.y2 and self.y2 >= other.y1)
+
+class Room(Rect):
+    def __init__(self, x, y, w, h):
+        super(self.__class__, self).__init__(x, y, w, h)
+
+    def isIn(self, x, y):
+        if (x > x1 and x <= x2 and y > y1 and y < y2):
+            return True
+
+        return False
 
 
 def _create_room(new_map, room):
