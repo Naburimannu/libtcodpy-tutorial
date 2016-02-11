@@ -231,8 +231,8 @@ def _set(con, x, y, color, mode):
 def _draw_fov(player):
     libtcod.console_clear(_con)
     current_map = player.current_map
-    for screen_y in range(config.MAP_PANEL_HEIGHT):
-        for screen_x in range(config.MAP_PANEL_WIDTH):
+    for screen_y in range(min(current_map.height, config.MAP_PANEL_HEIGHT)):
+        for screen_x in range(min(current_map.width, config.MAP_PANEL_WIDTH)):
             (map_x, map_y) = ScreenCoords.toWorldCoords(player.camera_position,
                                                         (screen_x, screen_y))
             visible = libtcod.map_is_in_fov(current_map.fov_map, map_x, map_y)
@@ -256,12 +256,12 @@ def update_camera(player):
     y = player.y - config.MAP_PANEL_HEIGHT / 2
 
     # Make sure the camera doesn't see outside the map.
-    if x < 0: x = 0
-    if y < 0: y = 0
     if x > player.current_map.width - config.MAP_PANEL_WIDTH:
         x = player.current_map.width - config.MAP_PANEL_WIDTH
     if y > player.current_map.height - config.MAP_PANEL_HEIGHT:
         y = player.current_map.height - config.MAP_PANEL_HEIGHT
+    if x < 0: x = 0
+    if y < 0: y = 0
 
     if (x, y) != player.camera_position:
         player.current_map.fov_needs_recompute = True
