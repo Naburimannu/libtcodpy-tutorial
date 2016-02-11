@@ -283,6 +283,20 @@ def _debug_positions(player, mouse):
                       ' y ' + str(player.camera_position[1]))
 
 
+def _debug_room(player):
+    global _panel
+    room_index = -1
+    for r in player.current_map.rooms:
+        if r.isIn(player.x, player.y):
+            room_index = player.current_map.rooms.index(r)
+            break
+    if (room_index != -1):
+        libtcod.console_print_ex(
+            _panel, 1, 4, libtcod.BKGND_NONE,
+            libtcod.LEFT, 'Room ' + str(room_index + 1))
+
+
+
 def render_all(player, mouse):
     global _con, _panel
     global color_dark_wall, color_light_wall
@@ -324,6 +338,7 @@ def render_all(player, mouse):
         _panel, 1, 3, libtcod.BKGND_NONE,
         libtcod.LEFT, 'Dungeon level ' + str(current_map.dungeon_level))
     _debug_positions(player, mouse)
+    #_debug_room(player)    
 
     libtcod.console_set_default_foreground(_panel, libtcod.light_gray)
     libtcod.console_print_ex(

@@ -12,39 +12,6 @@ ROOM_MIN_SIZE = 6
 MAX_ROOMS = 30
 
 
-class Rect(object):
-    """
-    A rectangle on the map. used to characterize a room.
-    """
-    def __init__(self, x, y, w, h):
-        self.x1 = x
-        self.y1 = y
-        self.x2 = x + w
-        self.y2 = y + h
-
-    def center(self):
-        center_x = (self.x1 + self.x2) / 2
-        center_y = (self.y1 + self.y2) / 2
-        return (center_x, center_y)
-
-    def intersect(self, other):
-        """
-        Returns true if two rectangles intersect.
-        """
-        return (self.x1 <= other.x2 and self.x2 >= other.x1 and
-                self.y1 <= other.y2 and self.y2 >= other.y1)
-
-class Room(Rect):
-    def __init__(self, x, y, w, h):
-        super(self.__class__, self).__init__(x, y, w, h)
-
-    def isIn(self, x, y):
-        if (x > x1 and x <= x2 and y > y1 and y < y2):
-            return True
-
-        return False
-
-
 def _create_room(new_map, room):
     """
     Make the tiles in a rectangle passable
@@ -189,7 +156,6 @@ def make_map(player, dungeon_level):
     player.current_map = new_map
     player.camera_position = (0, 0)
 
-    rooms = []
     num_rooms = 0
 
     for r in range(MAX_ROOMS):
@@ -198,10 +164,10 @@ def make_map(player, dungeon_level):
         x = libtcod.random_get_int(0, 0, new_map.width - w - 1)
         y = libtcod.random_get_int(0, 0, new_map.height - h - 1)
 
-        new_room = Rect(x, y, w, h)
+        new_room = map.Room(x, y, w, h)
 
         failed = False
-        for other_room in rooms:
+        for other_room in new_map.rooms:
             if new_room.intersect(other_room):
                 failed = True
                 break
@@ -219,7 +185,7 @@ def make_map(player, dungeon_level):
                 renderer.update_camera(player)
             else:
                 # Connect it to the previous room with a tunnel.
-                (prev_x, prev_y) = rooms[num_rooms-1].center()
+                (prev_x, prev_y) = new_map.rooms[num_rooms-1].center()
 
                 if libtcod.random_get_int(0, 0, 1) == 1:
                     _create_h_tunnel(new_map, prev_x, new_x, prev_y)
@@ -228,7 +194,7 @@ def make_map(player, dungeon_level):
                     _create_v_tunnel(new_map, prev_y, new_y, prev_x)
                     _create_h_tunnel(new_map, prev_x, new_x, new_y)
 
-            rooms.append(new_room)
+            new_map.rooms.append(new_room)
             num_rooms += 1
 
     # Create stairs at the center of the last room.
