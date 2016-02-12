@@ -9,6 +9,7 @@ import shelve
 import config
 import log
 from components import *
+import map
 import renderer
 import actions
 import ai
@@ -47,9 +48,9 @@ def try_use(player):
         actions.use(player, chosen_item.owner)
 
 
-def player_move_or_attack(player, dx, dy):
-    x = player.x + dx
-    y = player.y + dy
+def player_move_or_attack(player, direction):
+    x = player.x + direction[0]
+    y = player.y + direction[1]
 
     # Is there an attackable object?
     target = None
@@ -61,7 +62,7 @@ def player_move_or_attack(player, dx, dy):
     if target is not None:
         actions.attack(player.fighter, target)
     else:
-        if actions.move(player, dx, dy):
+        if actions.move(player, direction):
             player.current_map.fov_needs_recompute = True
 
 
@@ -131,28 +132,28 @@ def handle_keys(player):
         # movement keys
         if (key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8 or
             key_char == 'k'):
-            player_move_or_attack(player, 0, -1)
+            player_move_or_attack(player, map.north)
         elif (key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2 or
              key_char == 'j'):
-            player_move_or_attack(player, 0, 1)
+            player_move_or_attack(player, map.south)
         elif (key.vk == libtcod.KEY_LEFT or key.vk == libtcod.KEY_KP4 or
              key_char == 'h'):
-            player_move_or_attack(player, -1, 0)
+            player_move_or_attack(player, map.west)
         elif (key.vk == libtcod.KEY_RIGHT or key.vk == libtcod.KEY_KP6 or
              key_char == 'l'):
-            player_move_or_attack(player, 1, 0)
+            player_move_or_attack(player, map.east)
         elif (key.vk == libtcod.KEY_HOME or key.vk == libtcod.KEY_KP7 or
              key_char == 'y'):
-            player_move_or_attack(player, -1, -1)
+            player_move_or_attack(player, map.northwest)
         elif (key.vk == libtcod.KEY_PAGEUP or key.vk == libtcod.KEY_KP9 or
              key_char == 'u'):
-            player_move_or_attack(player, 1, -1)
+            player_move_or_attack(player, map.northeast)
         elif (key.vk == libtcod.KEY_END or key.vk == libtcod.KEY_KP1 or
              key_char == 'b'):
-            player_move_or_attack(player, -1, 1)
+            player_move_or_attack(player, map.southwest)
         elif (key.vk == libtcod.KEY_PAGEDOWN or key.vk == libtcod.KEY_KP3
              or key_char == 'n'):
-            player_move_or_attack(player, 1, 1)
+            player_move_or_attack(player, map.southeast)
         elif (key.vk == libtcod.KEY_KP5 or key_char == '.'):
             # do nothing
             pass

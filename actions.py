@@ -12,16 +12,17 @@ import math
 import libtcodpy as libtcod
 
 import log
+import map
 
 
-def move(o, dx, dy):
+def move(o, direction):
     """
     Moves object by (dx, dy).
     Returns true if move succeeded.
     """
-    if not o.current_map.is_blocked(o.x + dx, o.y + dy):
-        o.x += dx
-        o.y += dy
+    if not o.current_map.is_blocked(o.x + direction[0], o.y + direction[1]):
+        o.x += direction[0]
+        o.y += direction[1]
         return True
     return False
 
@@ -39,7 +40,7 @@ def move_towards(o, target_x, target_y):
     # convert to integer so the movement is restricted to the map grid.
     dx = int(round(dx / distance))
     dy = int(round(dy / distance))
-    return move(o, dx, dy)
+    return move(o, map.Direction((dx, dy)))
 
 
 def attack(fighter, target):
