@@ -3,7 +3,6 @@ import libtcodpy as libtcod
 import config
 import map
 from components import *
-import renderer
 import ai
 import spells
 
@@ -145,19 +144,8 @@ def _place_objects(new_map, room):
             item.always_visible = True  # Items are visible even out-of-FOV, if in an explored area
 
 
-def make_map(player, dungeon_level):
-    """
-    Creates a new simple map at the given dungeon level.
-    Sets player.current_map to the new map, and adds the player as the first
-    object.
-    """
-    new_map = map.Map(config.MAP_HEIGHT, config.MAP_WIDTH, dungeon_level)
-    new_map.objects.append(player)
-    player.current_map = new_map
-    player.camera_position = (0, 0)
-
+def _build_map(player, new_map):
     num_rooms = 0
-
     for r in range(MAX_ROOMS):
         w = libtcod.random_get_int(0, ROOM_MIN_SIZE, ROOM_MAX_SIZE)
         h = libtcod.random_get_int(0, ROOM_MIN_SIZE, ROOM_MAX_SIZE)
@@ -175,16 +163,9 @@ def make_map(player, dungeon_level):
         if not failed:
             # There are no intersections, so this room is valid.
             _create_room(new_map, new_room)
-            _place_objects(new_map, new_room)
             (new_x, new_y) = new_room.center()
 
-            if num_rooms == 0:
-                # This is the first room, where the player starts.
-                player.x = new_x
-                player.y = new_y
-                renderer.update_camera(player)
-            else:
-                # Connect it to the previous room with a tunnel.
+            if num_rooms > 0:
                 (prev_x, prev_y) = new_map.rooms[num_rooms-1].center()
 
                 if libtcod.random_get_int(0, 0, 1) == 1:
@@ -202,7 +183,24 @@ def make_map(player, dungeon_level):
     stairs.destination = None
     stairs.dest_position = (0, 0)
     new_map.objects.insert(0, stairs)
-    new_map.portals.insert(0, stairs)
+    new_map.portals.insert(0, stairs)        
+
+
+def make_map(player, dungeon_level):
+    """
+    Creates a new simple map at the given dungeon level.
+    Sets player.current_map to the new map, and adds the player as the first
+    object.
+    """
+    new_map = map.Map(config.MAP_HEIGHT, config.MAP_WIDTH, dungeon_level)
+    new_map.objects.append(player)
+    player.current_map = new_map
+    player.camera_position = (0, 0)
+    new_map.random_seed = libtcod.random_save(0)
+    _build_map(player, new_map)
+    for new_room in new_map.rooms:
+        _place_objects(new_map, new_room)
+    (player.x, player.y) = new_map.rooms[0].center()
 
     new_map.initialize_fov()
     return new_map

@@ -44,6 +44,8 @@ class Map(object):
         self.rooms = []
         self.portals = []
 
+        self.random_seed = None
+
         self.fov_map = None
 
         # Maps default to blocked & unexplored

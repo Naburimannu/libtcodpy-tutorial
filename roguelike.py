@@ -343,6 +343,7 @@ def new_game():
 
     cartographer.make_map(player, 1)
     renderer.clear_console()
+    renderer.update_camera(player)
 
     log.message('Welcome stranger! Prepare to perish in the Tombs of the Ancient Kings.', libtcod.red)
 
@@ -362,6 +363,7 @@ def next_level(player, portal):
     old_map = player.current_map
     cartographer.make_map(player, player.current_map.dungeon_level + 1)
     renderer.clear_console()
+    renderer.update_camera(player)
 
     # Create the up stairs at the current position.
     stairs = Object(player.x, player.y, '>', 'stairs up', libtcod.white, always_visible=True)
