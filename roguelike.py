@@ -24,96 +24,27 @@ LEVEL_UP_BASE = 200
 LEVEL_UP_FACTOR = 150
 
 
-def pick_up(actor, o):
-    """
-    Add an Object to the actor's inventory and remove from the map.
-    """
-    if len(actor.inventory) >= 26:
-        log.message(actor.name.capitalize() + ' inventory is full, cannot pick up ' +
-                    o.name + '.', libtcod.red)
-    else:
-        actor.inventory.append(o)
-        actor.current_map.objects.remove(o)
-        log.message(actor.name.capitalize() + ' picked up a ' + o.name + '!', libtcod.green)
-
-        # Special case: automatically equip if the corresponding equipment slot is unused.
-        equipment = o.equipment
-        if equipment and get_equipped_in_slot(actor, equipment.slot) is None:
-            equip(actor, equipment)
+def try_pick_up(player):
+    for object in player.current_map.objects:
+        if object.x == player.x and object.y == player.y and object.item:
+            actions.pick_up(player, object)
+            break
 
 
-def drop(actor, o):
-    """
-    Remove an Object from the actor's inventory and add it to the map
-    at the player's coordinates.
-    If it's equipment, dequip before dropping.
-    """
-    if o.equipment:
-        dequip(actor, o.equipment)
-
-    actor.current_map.objects.append(o)
-    actor.inventory.remove(o)
-    o.x = actor.x
-    o.y = actor.y
-    log.message(actor.name.capitalize() + ' dropped a ' + o.name + '.', libtcod.yellow)
+def try_drop(player):
+    chosen_item = inventory_menu(
+        player,
+        'Press the key next to an item to drop it, or any other to cancel.\n')
+    if chosen_item is not None:
+        actions.drop(player, chosen_item.owner)
 
 
-def use(actor, o):
-    """
-    If the object has the Equipment component, toggle equip/dequip.
-    Otherwise invoke its use_function and (if not cancelled) destroy it.
-    """
-    if o.equipment:
-        toggle_equip(actor, o.equipment)
-        return
-
-    if o.item.use_function is None:
-        log.message('The ' + o.name + ' cannot be used.')
-    else:
-        if o.item.use_function(actor) != 'cancelled':
-            actor.inventory.remove(o)
-
-
-def toggle_equip(actor, eqp):
-    if eqp.is_equipped:
-        dequip(actor, eqp)
-    else:
-        equip(actor, eqp)
-
-
-def equip(actor, eqp, report=True):
-    """
-    Equip the object (and log unless report=False).
-    Ensure only one object per slot.
-    """
-    old_equipment = get_equipped_in_slot(actor, eqp.slot)
-    if old_equipment is not None:
-        dequip(actor, old_equipment)
-
-    eqp.is_equipped = True
-    if report is True:
-        log.message('Equipped ' + eqp.owner.name + ' on ' + eqp.slot + '.', libtcod.light_green)
-
-
-def dequip(actor, eqp):
-    """
-    Dequip the object (and log).
-    """
-    if not eqp.is_equipped:
-        return
-    eqp.is_equipped = False
-    log.message('Dequipped ' + eqp.owner.name + ' from ' + eqp.slot + '.', libtcod.light_yellow)
-
-
-def get_equipped_in_slot(actor, slot):
-    """
-    Returns Equipment in a slot, or None.
-    """
-    if hasattr(actor, 'inventory'):
-        for obj in actor.inventory:
-            if obj.equipment and obj.equipment.slot == slot and obj.equipment.is_equipped:
-                return obj.equipment
-    return None
+def try_use(player):
+    chosen_item = inventory_menu(
+        player,
+        'Press the key next to an item to use it, or any other to cancel.\n')
+    if chosen_item is not None:
+        actions.use(player, chosen_item.owner)
 
 
 def player_move_or_attack(player, dx, dy):
@@ -154,6 +85,29 @@ def inventory_menu(player, header):
     if index is None or len(player.inventory) == 0:
         return None
     return player.inventory[index].item
+
+
+def display_character_info(player):
+    level_up_xp = LEVEL_UP_BASE + player.level * LEVEL_UP_FACTOR
+    renderer.msgbox('Character Information\n\nLevel: ' + str(player.level) +
+                    '\nExperience: ' + str(player.fighter.xp) +
+                    '\nExperience to level up: ' + str(level_up_xp) +
+                    '\n\nMaximum HP: ' + str(player.fighter.max_hp) +
+                    '\nAttack: ' + str(player.fighter.power) +
+                    '\nDefense: ' + str(player.fighter.defense),
+                    CHARACTER_SCREEN_WIDTH)
+
+
+def try_stairs(player):
+    for f in player.current_map.portals:
+        if f.x == player.x and f.y == player.y:
+            if f.destination == None:
+                f.destination = next_level(player, f)
+                f.dest_position = (player.x, player.y)
+                break
+            else:
+                revisit_level(player, f)
+                break
 
 
 def handle_keys(player):
@@ -199,56 +153,20 @@ def handle_keys(player):
         elif (key.vk == libtcod.KEY_PAGEDOWN or key.vk == libtcod.KEY_KP3
              or key_char == 'n'):
             player_move_or_attack(player, 1, 1)
-        elif (key.vk == libtcod.KEY_KP5 or key_char == ' '):
+        elif (key.vk == libtcod.KEY_KP5 or key_char == '.'):
             # do nothing
             pass
         else:
-
             if key_char == 'g':
-                # pick up an item
-                for object in player.current_map.objects:
-                    if object.x == player.x and object.y == player.y and object.item:
-                        pick_up(player, object)
-                        break
-
+                try_pick_up(player)
             if key_char == 'i':
-                # show the inventory; if an item is selected, use it
-                chosen_item = inventory_menu(
-                    player,
-                    'Press the key next to an item to use it, or any other to cancel.\n')
-                if chosen_item is not None:
-                    use(player, chosen_item.owner)
-
+                try_use(player)
             if key_char == 'd':
-                # show the inventory; if an item is selected, drop it
-                chosen_item = inventory_menu(
-                    player,
-                    'Press the key next to an item to drop it, or any other to cancel.\n')
-                if chosen_item is not None:
-                    drop(player, chosen_item.owner)
-
+                try_drop(player)
             if key_char == 'c':
-                # show character information
-                level_up_xp = LEVEL_UP_BASE + player.level * LEVEL_UP_FACTOR
-                renderer.msgbox('Character Information\n\nLevel: ' + str(player.level) +
-                                '\nExperience: ' + str(player.fighter.xp) +
-                                '\nExperience to level up: ' + str(level_up_xp) +
-                                '\n\nMaximum HP: ' + str(player.fighter.max_hp) +
-                                '\nAttack: ' + str(player.fighter.power) +
-                                '\nDefense: ' + str(player.fighter.defense),
-                                CHARACTER_SCREEN_WIDTH)
-
+                display_character_info(player)
             if key_char == '<':
-                # Traverse stairs, if the player is on them.
-                for f in player.current_map.portals:
-                    if f.x == player.x and f.y == player.y:
-                        if f.destination == None:
-                            f.destination = next_level(player, f)
-                            f.dest_position = (player.x, player.y)
-                            break
-                        else:
-                            revisit_level(player, f)
-                            break
+                try_stairs(player)
 
             return 'didnt-take-turn'
 
