@@ -8,8 +8,8 @@ import shelve
 
 import config
 import log
+import algebra
 from components import *
-import map
 import renderer
 import actions
 import ai
@@ -49,8 +49,8 @@ def try_use(player):
 
 
 def player_move_or_attack(player, direction):
-    x = player.x + direction[0]
-    y = player.y + direction[1]
+    x = player.x + direction.x
+    y = player.y + direction.y
 
     # Is there an attackable object?
     target = None
@@ -132,28 +132,28 @@ def handle_keys(player):
         # movement keys
         if (key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8 or
             key_char == 'k'):
-            player_move_or_attack(player, map.north)
+            player_move_or_attack(player, algebra.north)
         elif (key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2 or
              key_char == 'j'):
-            player_move_or_attack(player, map.south)
+            player_move_or_attack(player, algebra.south)
         elif (key.vk == libtcod.KEY_LEFT or key.vk == libtcod.KEY_KP4 or
              key_char == 'h'):
-            player_move_or_attack(player, map.west)
+            player_move_or_attack(player, algebra.west)
         elif (key.vk == libtcod.KEY_RIGHT or key.vk == libtcod.KEY_KP6 or
              key_char == 'l'):
-            player_move_or_attack(player, map.east)
+            player_move_or_attack(player, algebra.east)
         elif (key.vk == libtcod.KEY_HOME or key.vk == libtcod.KEY_KP7 or
              key_char == 'y'):
-            player_move_or_attack(player, map.northwest)
+            player_move_or_attack(player, algebra.northwest)
         elif (key.vk == libtcod.KEY_PAGEUP or key.vk == libtcod.KEY_KP9 or
              key_char == 'u'):
-            player_move_or_attack(player, map.northeast)
+            player_move_or_attack(player, algebra.northeast)
         elif (key.vk == libtcod.KEY_END or key.vk == libtcod.KEY_KP1 or
              key_char == 'b'):
-            player_move_or_attack(player, map.southwest)
+            player_move_or_attack(player, algebra.southwest)
         elif (key.vk == libtcod.KEY_PAGEDOWN or key.vk == libtcod.KEY_KP3
              or key_char == 'n'):
-            player_move_or_attack(player, map.southeast)
+            player_move_or_attack(player, algebra.southeast)
         elif (key.vk == libtcod.KEY_KP5 or key_char == '.'):
             # do nothing
             pass

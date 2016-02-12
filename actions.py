@@ -7,12 +7,10 @@ Magical effects and targeting (spells.py) could also live here.
 
 Conditionals and interfaces for the player sit up top in roguelike.py.
 """
-import math
-
 import libtcodpy as libtcod
 
 import log
-import map
+import algebra
 
 
 def move(o, direction):
@@ -20,9 +18,9 @@ def move(o, direction):
     Moves object by (dx, dy).
     Returns true if move succeeded.
     """
-    if not o.current_map.is_blocked(o.x + direction[0], o.y + direction[1]):
-        o.x += direction[0]
-        o.y += direction[1]
+    if not o.current_map.is_blocked(o.x + direction.x, o.y + direction.y):
+        o.x += direction.x
+        o.y += direction.y
         return True
     return False
 
@@ -32,15 +30,9 @@ def move_towards(o, target_x, target_y):
     Moves object one step towards target location.
     Returns true if move succeeded.
     """
-    dx = target_x - o.x
-    dy = target_y - o.y
-    distance = math.sqrt(dx ** 2 + dy ** 2)
-
-    # Normalize to length 1 (preserving direction), then round and
-    # convert to integer so the movement is restricted to the map grid.
-    dx = int(round(dx / distance))
-    dy = int(round(dy / distance))
-    return move(o, map.Direction((dx, dy)))
+    dir = algebra.Direction(target_x - o.x, target_y - o.y)
+    dir.normalize()
+    return move(o, dir)
 
 
 def attack(fighter, target):

@@ -35,20 +35,6 @@ class Room(Rect):
         return False
 
 
-class Direction(tuple):
-    pass
-
-
-north = Direction((0, -1))
-south = Direction((0, 1))
-west = Direction((-1, 0))
-east = Direction((1, 0))
-northwest = Direction((-1, -1))
-northeast = Direction((1, -1))
-southwest = Direction((-1, 1))
-southeast = Direction((1, 1))
-
-
 class Map(object):
     def __init__(self, height, width, dungeon_level):
         self.height = height
