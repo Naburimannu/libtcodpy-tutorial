@@ -45,6 +45,9 @@ class Map(object):
                     self.fov_map, x, y,
                     not self.block_sight[x][y], not self.blocked[x][y])
 
+    def is_blocked_at(self, pos):
+        return self.is_blocked(pos.x, pos.y)
+
     def is_blocked(self, x, y):
         """
         Returns true if impassible map terrain or any blocking objects

@@ -1,6 +1,7 @@
 import libtcodpy as libtcod
 
 import config
+import algebra
 import map
 from components import *
 import ai
@@ -9,6 +10,11 @@ import spells
 ROOM_MAX_SIZE = 10
 ROOM_MIN_SIZE = 6
 MAX_ROOMS = 30
+
+
+def _random_position_in_room(room):
+    return algebra.Location(libtcod.random_get_int(0, room.x1+1, room.x2-1),
+                            libtcod.random_get_int(0, room.y1+1, room.y2-1))
 
 
 def _create_room(new_map, room):
@@ -89,21 +95,20 @@ def _place_objects(new_map, room):
 
     num_monsters = libtcod.random_get_int(0, 0, max_monsters)
     for i in range(num_monsters):
-        x = libtcod.random_get_int(0, room.x1+1, room.x2-1)
-        y = libtcod.random_get_int(0, room.y1+1, room.y2-1)
+        pos = _random_position_in_room(room)
 
-        if not new_map.is_blocked(x, y):
+        if not new_map.is_blocked_at(pos):
             choice = _random_choice(monster_chances)
             if choice == 'orc':
                 fighter_component = Fighter(hp=20, defense=0, power=4, xp=35, death_function=ai.monster_death)
                 ai_component = AI(ai.basic_monster)
-                monster = Object(x, y, 'o', 'orc', libtcod.desaturated_green,
+                monster = Object(pos.x, pos.y, 'o', 'orc', libtcod.desaturated_green,
                                  blocks=True, fighter=fighter_component, ai=ai_component)
 
             elif choice == 'troll':
                 fighter_component = Fighter(hp=30, defense=2, power=8, xp=100, death_function=ai.monster_death)
                 ai_component = AI(ai.basic_monster)
-                monster = Object(x, y, 'T', 'troll', libtcod.darker_green,
+                monster = Object(pos.x, pos.y, 'T', 'troll', libtcod.darker_green,
                                  blocks=True, fighter=fighter_component, ai=ai_component)
 
             new_map.objects.append(monster)
@@ -111,34 +116,33 @@ def _place_objects(new_map, room):
 
     num_items = libtcod.random_get_int(0, 0, max_items)
     for i in range(num_items):
-        x = libtcod.random_get_int(0, room.x1+1, room.x2-1)
-        y = libtcod.random_get_int(0, room.y1+1, room.y2-1)
+        pos = _random_position_in_room(room)
 
-        if not new_map.is_blocked(x, y):
+        if not new_map.is_blocked_at(pos):
             choice = _random_choice(item_chances)
             if choice == 'heal':
                 item_component = Item(use_function=spells.cast_heal)
-                item = Object(x, y, '!', 'healing potion', libtcod.violet, item=item_component)
+                item = Object(pos.x, pos.y, '!', 'healing potion', libtcod.violet, item=item_component)
 
             elif choice == 'lightning':
                 item_component = Item(use_function=spells.cast_lightning)
-                item = Object(x, y, '#', 'scroll of lightning bolt', libtcod.light_yellow, item=item_component)
+                item = Object(pos.x, pos.y, '#', 'scroll of lightning bolt', libtcod.light_yellow, item=item_component)
 
             elif choice == 'fireball':
                 item_component = Item(use_function=spells.cast_fireball)
-                item = Object(x, y, '#', 'scroll of fireball', libtcod.light_yellow, item=item_component)
+                item = Object(pos.x, pos.y, '#', 'scroll of fireball', libtcod.light_yellow, item=item_component)
 
             elif choice == 'confuse':
                 item_component = Item(use_function=spells.cast_confuse)
-                item = Object(x, y, '#', 'scroll of confusion', libtcod.light_yellow, item=item_component)
+                item = Object(pos.x, pos.y, '#', 'scroll of confusion', libtcod.light_yellow, item=item_component)
 
             elif choice == 'sword':
                 equipment_component = Equipment(slot='right hand', power_bonus=3)
-                item = Object(x, y, '/', 'sword', libtcod.sky, equipment=equipment_component)
+                item = Object(pos.x, pos.y, '/', 'sword', libtcod.sky, equipment=equipment_component)
 
             elif choice == 'shield':
                 equipment_component = Equipment(slot='left hand', defense_bonus=1)
-                item = Object(x, y, '[', 'shield', libtcod.darker_orange, equipment=equipment_component)
+                item = Object(pos.x, pos.y, '[', 'shield', libtcod.darker_orange, equipment=equipment_component)
 
             new_map.objects.insert(0, item)
             item.always_visible = True  # Items are visible even out-of-FOV, if in an explored area
