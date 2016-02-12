@@ -239,9 +239,16 @@ def handle_keys(player):
                                 CHARACTER_SCREEN_WIDTH)
 
             if key_char == '<':
-                # go down stairs, if the player is on them
-                if player.current_map.stairs.x == player.x and player.current_map.stairs.y == player.y:
-                    next_level(player)
+                # Traverse stairs, if the player is on them.
+                for f in player.current_map.portals:
+                    if f.x == player.x and f.y == player.y:
+                        if f.destination == None:
+                            f.destination = next_level(player, f)
+                            f.dest_position = (player.x, player.y)
+                            break
+                        else:
+                            revisit_level(player, f)
+                            break
 
             return 'didnt-take-turn'
 
@@ -342,16 +349,43 @@ def new_game():
     return player
 
 
-def next_level(player):
+def next_level(player, portal):
     """
     Advance to the next level (changing player.current_map).
     Heals the player 50%.
+    Returns the Map of the new level.
     """
     log.message('You take a moment to rest, and recover your strength.', libtcod.light_violet)
     actions.heal(player.fighter, player.fighter.max_hp / 2)
 
     log.message('After a rare moment of peace, you descend deeper into the heart of the dungeon...', libtcod.red)
+    old_map = player.current_map
     cartographer.make_map(player, player.current_map.dungeon_level + 1)
+    renderer.clear_console()
+
+    # Create the up stairs at the current position.
+    stairs = Object(player.x, player.y, '>', 'stairs up', libtcod.white, always_visible=True)
+    stairs.destination = old_map
+    stairs.dest_position = (portal.x, portal.y)
+    player.current_map.objects.insert(0, stairs)
+    player.current_map.portals.insert(0, stairs)
+
+    return player.current_map
+
+
+def revisit_level(player, portal):
+    """
+    Return to a level the player has previously visited (changing player.current_map).
+    Does *not* heal the player.
+    """
+    player.current_map = portal.destination
+    player.x = portal.dest_position[0]
+    player.y = portal.dest_position[1]
+    # Call to initialize_fov() should be redundant but in practice seems to have
+    # worked around an intermittent bug.
+    player.current_map.initialize_fov()
+    player.current_map.fov_needs_recompute = True
+    renderer.update_camera(player)
     renderer.clear_console()
 
 

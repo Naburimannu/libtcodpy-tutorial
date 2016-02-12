@@ -42,8 +42,8 @@ class Map(object):
         self.dungeon_level = dungeon_level
         self.objects = []
         self.rooms = []
+        self.portals = []
 
-        self.stairs = None
         self.fov_map = None
 
         # Maps default to blocked & unexplored

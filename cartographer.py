@@ -198,8 +198,11 @@ def make_map(player, dungeon_level):
             num_rooms += 1
 
     # Create stairs at the center of the last room.
-    new_map.stairs = Object(new_x, new_y, '<', 'stairs', libtcod.white, always_visible=True)
-    new_map.objects.insert(0, new_map.stairs)
+    stairs = Object(new_x, new_y, '<', 'stairs down', libtcod.white, always_visible=True)
+    stairs.destination = None
+    stairs.dest_position = (0, 0)
+    new_map.objects.insert(0, stairs)
+    new_map.portals.insert(0, stairs)
 
     new_map.initialize_fov()
     return new_map
