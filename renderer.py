@@ -166,7 +166,8 @@ def _draw_object(o, player):
     # or it's set to "always visible" and on an explored tile.
     global _con
     if (libtcod.map_is_in_fov(player.current_map.fov_map, o.x, o.y) or
-            (o.always_visible and player.current_map.explored[o.x][o.y])):
+            (o.always_visible and
+             player.current_map.is_explored(algebra.Location(o.x, o.y)))):
         libtcod.console_set_default_foreground(_con, o.color)
         (x, y) = ScreenCoords.fromWorldCoords(player.camera_position, (o.x, o.y))
         libtcod.console_put_char(_con, x, y, o.char, libtcod.BKGND_NONE)
@@ -241,7 +242,7 @@ def _draw_fov(player):
             wall = current_map.block_sight[pos.x][pos.y]
             if not visible:
                 # If it's not visible, only draw if it's explored
-                if current_map.explored[pos.x][pos.y]:
+                if current_map.is_explored(pos):
                     if wall:
                         _set(_con, screen_x, screen_y, color_dark_wall, libtcod.BKGND_SET)
                     else:
@@ -251,7 +252,7 @@ def _draw_fov(player):
                     _set(_con, screen_x, screen_y, color_light_wall, libtcod.BKGND_SET)
                 else:
                     _set(_con, screen_x, screen_y, color_light_ground, libtcod.BKGND_SET)
-                current_map.explored[pos.x][pos.y] = True
+                current_map.explore(pos)
 
 def update_camera(player):
     x = player.x - config.MAP_PANEL_WIDTH / 2

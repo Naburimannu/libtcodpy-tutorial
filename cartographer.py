@@ -182,7 +182,7 @@ def _build_map(player, new_map):
     # Create stairs at the center of the last room.
     stairs = Object(new_x, new_y, '<', 'stairs down', libtcod.white, always_visible=True)
     stairs.destination = None
-    stairs.dest_position = (0, 0)
+    stairs.dest_position = None
     new_map.objects.insert(0, stairs)
     new_map.portals.insert(0, stairs)        
 

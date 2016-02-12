@@ -104,7 +104,7 @@ def try_stairs(player):
         if f.x == player.x and f.y == player.y:
             if f.destination == None:
                 f.destination = next_level(player, f)
-                f.dest_position = (player.x, player.y)
+                f.dest_position = algebra.Location(player.x, player.y)
                 break
             else:
                 revisit_level(player, f)
@@ -287,7 +287,7 @@ def next_level(player, portal):
     # Create the up stairs at the current position.
     stairs = Object(player.x, player.y, '>', 'stairs up', libtcod.white, always_visible=True)
     stairs.destination = old_map
-    stairs.dest_position = (portal.x, portal.y)
+    stairs.dest_position = algebra.Location(portal.x, portal.y)
     player.current_map.objects.insert(0, stairs)
     player.current_map.portals.insert(0, stairs)
 
@@ -300,8 +300,8 @@ def revisit_level(player, portal):
     Does *not* heal the player.
     """
     player.current_map = portal.destination
-    player.x = portal.dest_position[0]
-    player.y = portal.dest_position[1]
+    player.x = portal.dest_position.x
+    player.y = portal.dest_position.y
     # Call to initialize_fov() should be redundant but in practice seems to have
     # worked around an intermittent bug.
     player.current_map.initialize_fov()

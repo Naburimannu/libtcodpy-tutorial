@@ -30,7 +30,7 @@ class Map(object):
 
         # Maps default to blocked & unexplored
         self.blocked = [[True for y in range(height)] for x in range(width)]
-        self.explored = [[False for y in range(height)] for x in range(width)]
+        self._explored = [[False for y in range(height)] for x in range(width)]
         self.block_sight = [[True for y in range(height)] for x in range(width)]
 
     def initialize_fov(self):
@@ -52,9 +52,13 @@ class Map(object):
         """
         if self.blocked[x][y]:
             return True
-
         for object in self.objects:
             if object.blocks and object.x == x and object.y == y:
                 return True
-
         return False
+
+    def is_explored(self, pos):
+        return self._explored[pos.x][pos.y]
+
+    def explore(self, pos):
+        self._explored[pos.x][pos.y] = True
