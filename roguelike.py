@@ -257,7 +257,7 @@ def new_game():
     equipment_component = Equipment(slot='right hand', power_bonus=2)
     obj = Object(0, 0, '-', 'dagger', libtcod.sky, equipment=equipment_component)
     player.inventory.append(obj)
-    equip(player, equipment_component, False)
+    actions.equip(player, equipment_component, False)
     obj.always_visible = True
 
     cartographer.make_map(player, 1)

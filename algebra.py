@@ -1,6 +1,29 @@
 import math
 
 
+class Rect(object):
+    """
+    A rectangle on the map. used to characterize a room.
+    """
+    def __init__(self, x, y, w, h):
+        self.x1 = x
+        self.y1 = y
+        self.x2 = x + w
+        self.y2 = y + h
+
+    def center(self):
+        center_x = (self.x1 + self.x2) / 2
+        center_y = (self.y1 + self.y2) / 2
+        return (center_x, center_y)
+
+    def intersect(self, other):
+        """
+        Returns true if two rectangles intersect.
+        """
+        return (self.x1 <= other.x2 and self.x2 >= other.x1 and
+                self.y1 <= other.y2 and self.y2 >= other.y1)
+
+
 class Location(object):
     def __init__(self, x, y):
         self.x = x
@@ -12,6 +35,22 @@ class Location(object):
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    def __add__(self, other):
+        return Location(self.x + other.x, self.y + other.y)
+
+    def __sub__(self, other):
+        return Location(self.x - other.x, self.y - other.y)
+
+    def bound(self, rect):
+        if (self.x > rect.x2):
+            self.x = rect.x2
+        if (self.y > rect.y2):
+            self.y = self.y2
+        if (self.x < rect.x1):
+            self.x = rect.x1
+        if (self.y < rect.y1):
+            self.y = rect.y1
 
 
 class Direction(object):
