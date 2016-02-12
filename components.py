@@ -47,6 +47,13 @@ class Object:
         return math.sqrt((x - self.x) ** 2 + (y - self.y) ** 2)
 
 
+    def distance(self, pos):
+        """
+        Return the distance to some coordinates.
+        """
+        return math.sqrt((pos.x - self.x) ** 2 + (pos.y - self.y) ** 2)
+
+
 class Component:
     """
     Base class for components to minimize boilerplate.

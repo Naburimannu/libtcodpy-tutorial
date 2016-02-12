@@ -33,18 +33,18 @@ def _target_tile(actor, max_range=None):
         renderer.render_all(actor, ui.mouse)
         actor.current_map.fov_needs_recompute = False
 
-        (x, y) = renderer.ScreenCoords.toWorldCoords(actor.camera_position,
+        pos = renderer.ScreenCoords.toWorldCoords(actor.camera_position,
                                                      (ui.mouse.cx, ui.mouse.cy))
 
         if ui.mouse.rbutton_pressed or ui.key.vk == libtcod.KEY_ESCAPE:
-            return (None, None)
+            return None
 
         # Accept the target if the player clicked in FOV
         # and within the range specified.
         if (ui.mouse.lbutton_pressed and
-                libtcod.map_is_in_fov(actor.current_map.fov_map, x, y) and
-                (max_range is None or actor.distance(x, y) <= max_range)):
-            return (x, y)
+                libtcod.map_is_in_fov(actor.current_map.fov_map, pos.x, pos.y) and
+                (max_range is None or actor.distance(pos.x, pos.y) <= max_range)):
+            return pos
 
 
 def _target_monster(actor, max_range=None):
@@ -53,12 +53,12 @@ def _target_monster(actor, max_range=None):
     or None if right-clicked.
     """
     while True:
-        (x, y) = _target_tile(actor, max_range)
-        if x is None:
+        pos = _target_tile(actor, max_range)
+        if pos is None:
             return None
 
         for obj in actor.current_map.objects:
-            if obj.x == x and obj.y == y and obj.fighter and obj != actor:
+            if obj.x == pos.x and obj.y == pos.y and obj.fighter and obj != actor:
                 return obj
 
 
@@ -110,14 +110,14 @@ def cast_lightning(actor):
 def cast_fireball(actor):
     log.message('Left-click a target tile for the fireball, '
                 'or right-click to cancel.', libtcod.light_cyan)
-    (x, y) = _target_tile(actor)
-    if x is None:
+    pos = _target_tile(actor)
+    if pos is None:
         return 'cancelled'
     log.message('The fireball explodes, burning everything within ' +
                 str(FIREBALL_RADIUS) + ' tiles!', libtcod.orange)
 
     for obj in actor.current_map.objects:
-        if obj.distance(x, y) <= FIREBALL_RADIUS and obj.fighter:
+        if obj.distance(pos) <= FIREBALL_RADIUS and obj.fighter:
             log.message('The ' + obj.name + ' gets burned for ' +
                         str(FIREBALL_DAMAGE) + ' hit points.',
                         libtcod.orange)

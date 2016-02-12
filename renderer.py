@@ -2,6 +2,7 @@ import libtcodpy as libtcod
 
 import config
 import log
+import algebra
 
 color_dark_wall = libtcod.Color(0, 0, 100)
 color_light_wall = libtcod.Color(130, 110, 50)
@@ -31,7 +32,7 @@ class ScreenCoords(tuple):
     def toWorldCoords(camera_coords, screen_coords):
         x = screen_coords[0] + camera_coords[0]
         y = screen_coords[1] + camera_coords[1]
-        return (x, y)
+        return algebra.Location(x, y)
 
 
 def renderer_init():
@@ -149,11 +150,12 @@ def _render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
 
 
 def _get_names_under_mouse(player, objects, fov_map, mouse):
-    (x, y) = ScreenCoords.toWorldCoords(player.camera_position,
+    pos = ScreenCoords.toWorldCoords(player.camera_position,
                                         (mouse.cx, mouse.cy))
 
     names = [obj.name for obj in objects
-             if obj.x == x and obj.y == y and libtcod.map_is_in_fov(fov_map, obj.x, obj.y)]
+             if obj.x == pos.x and obj.y == pos.y and
+             libtcod.map_is_in_fov(fov_map, obj.x, obj.y)]
 
     names = ', '.join(names)
     return names.capitalize()
@@ -233,13 +235,13 @@ def _draw_fov(player):
     current_map = player.current_map
     for screen_y in range(min(current_map.height, config.MAP_PANEL_HEIGHT)):
         for screen_x in range(min(current_map.width, config.MAP_PANEL_WIDTH)):
-            (map_x, map_y) = ScreenCoords.toWorldCoords(player.camera_position,
+            pos = ScreenCoords.toWorldCoords(player.camera_position,
                                                         (screen_x, screen_y))
-            visible = libtcod.map_is_in_fov(current_map.fov_map, map_x, map_y)
-            wall = current_map.block_sight[map_x][map_y]
+            visible = libtcod.map_is_in_fov(current_map.fov_map, pos.x, pos.y)
+            wall = current_map.block_sight[pos.x][pos.y]
             if not visible:
                 # If it's not visible, only draw if it's explored
-                if current_map.explored[map_x][map_y]:
+                if current_map.explored[pos.x][pos.y]:
                     if wall:
                         _set(_con, screen_x, screen_y, color_dark_wall, libtcod.BKGND_SET)
                     else:
@@ -249,7 +251,7 @@ def _draw_fov(player):
                     _set(_con, screen_x, screen_y, color_light_wall, libtcod.BKGND_SET)
                 else:
                     _set(_con, screen_x, screen_y, color_light_ground, libtcod.BKGND_SET)
-                current_map.explored[map_x][map_y] = True
+                current_map.explored[pos.x][pos.y] = True
 
 def update_camera(player):
     x = player.x - config.MAP_PANEL_WIDTH / 2
