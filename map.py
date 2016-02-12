@@ -45,6 +45,7 @@ class Map(object):
         self.portals = []
 
         self.random_seed = None
+        self.rng = None
 
         self.fov_map = None
 

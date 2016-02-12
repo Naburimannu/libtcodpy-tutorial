@@ -145,12 +145,13 @@ def _place_objects(new_map, room):
 
 
 def _build_map(player, new_map):
+    new_map.rng = libtcod.random_new_from_seed(new_map.random_seed)
     num_rooms = 0
     for r in range(MAX_ROOMS):
-        w = libtcod.random_get_int(0, ROOM_MIN_SIZE, ROOM_MAX_SIZE)
-        h = libtcod.random_get_int(0, ROOM_MIN_SIZE, ROOM_MAX_SIZE)
-        x = libtcod.random_get_int(0, 0, new_map.width - w - 1)
-        y = libtcod.random_get_int(0, 0, new_map.height - h - 1)
+        w = libtcod.random_get_int(new_map.rng, ROOM_MIN_SIZE, ROOM_MAX_SIZE)
+        h = libtcod.random_get_int(new_map.rng, ROOM_MIN_SIZE, ROOM_MAX_SIZE)
+        x = libtcod.random_get_int(new_map.rng, 0, new_map.width - w - 1)
+        y = libtcod.random_get_int(new_map.rng, 0, new_map.height - h - 1)
 
         new_room = map.Room(x, y, w, h)
 
@@ -168,7 +169,7 @@ def _build_map(player, new_map):
             if num_rooms > 0:
                 (prev_x, prev_y) = new_map.rooms[num_rooms-1].center()
 
-                if libtcod.random_get_int(0, 0, 1) == 1:
+                if libtcod.random_get_int(new_map.rng, 0, 1) == 1:
                     _create_h_tunnel(new_map, prev_x, new_x, prev_y)
                     _create_v_tunnel(new_map, prev_y, new_y, new_x)
                 else:
