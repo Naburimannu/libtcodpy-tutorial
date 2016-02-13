@@ -18,9 +18,9 @@ def move(o, direction):
     Moves object by (dx, dy).
     Returns true if move succeeded.
     """
-    if not o.current_map.is_blocked(o.x + direction.x, o.y + direction.y):
-        o.x += direction.x
-        o.y += direction.y
+    goal = o.pos + direction
+    if not o.current_map.is_blocked_at(goal):
+        o.pos = goal
         return True
     return False
 

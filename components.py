@@ -2,6 +2,7 @@
 Simple entity system: any renderable Object can have a number of Components attached.
 """
 import math
+import algebra
 
 
 class Object:
@@ -11,8 +12,9 @@ class Object:
     """
     def __init__(self, x, y, char, name, color, blocks=False, always_visible=False,
                  fighter=None, ai=None, item=None, equipment=None):
-        self.x = x
-        self.y = y
+        #self.x = x
+        #self.y = y
+        self.pos = algebra.Location(x, y)
         self.char = char
         self.name = name
         self.color = color
@@ -27,6 +29,14 @@ class Object:
         self._ensure_ownership(item)
         self.equipment = equipment
         self._ensure_ownership(equipment)
+
+    @property
+    def x(self):
+        return self.pos.x
+
+    @property
+    def y(self):
+        return self.pos.y
 
     def _ensure_ownership(self, component):
         if (component):

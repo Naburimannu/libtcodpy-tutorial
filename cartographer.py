@@ -205,7 +205,8 @@ def make_map(player, dungeon_level):
     _build_map(player, new_map)
     for new_room in new_map.rooms:
         _place_objects(new_map, new_room)
-    (player.x, player.y) = new_map.rooms[0].center()
+    center = new_map.rooms[0].center()
+    player.pos = algebra.Location(center[0], center[1])
 
     new_map.initialize_fov()
     return new_map
