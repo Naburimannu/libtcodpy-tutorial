@@ -3,6 +3,7 @@ import libtcodpy as libtcod
 import config
 import log
 import algebra
+import ui
 
 color_dark_wall = libtcod.Color(0, 0, 100)
 color_light_wall = libtcod.Color(130, 110, 50)
@@ -57,9 +58,8 @@ def msgbox(text, width=50):
 def log_display(width=60):
     """
     Display the recent log history, wait for any keypress.
-    menu() 
     """
-    colored_text_list(log.game_msgs[-25:], width)
+    colored_text_list(log.game_msgs, width)
 
 
 def _write_log(messages, window, x, initial_y):
@@ -72,26 +72,56 @@ def _write_log(messages, window, x, initial_y):
                                  libtcod.LEFT, line)
         y += 1
 
+
 def colored_text_list(lines, width):
     """
     Display *lines* of (text, color) in a window of size *width*.
+    Scroll through them if the mouse wheel is spun or the arrows are pressed.
     """
-    # Create an off-screen console that represents the menu's window.
-    height = len(lines)
+    length = len(lines)
+    height = min(length, 40)
     window = libtcod.console_new(width, height)
+    offset = -height
 
-    _write_log(lines, window, 0, 0)
-
-    x = config.SCREEN_WIDTH/2 - width/2
-    y = config.SCREEN_HEIGHT/2 - height/2
-    libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
-
-    libtcod.console_flush()
     while True:
-        key = libtcod.console_wait_for_keypress(True)
-        if not (key.vk == libtcod.KEY_ALT or key.vk == libtcod.KEY_CONTROL or
-                key.vk == libtcod.KEY_SHIFT):
-            break;
+        if offset > -height:
+            offset = -height
+        if offset < -length:
+            offset = -length
+
+        libtcod.console_clear(window)
+        _write_log(lines[offset:length + offset + height],
+                   window, 0, 0)
+
+        x = config.SCREEN_WIDTH/2 - width/2
+        y = config.SCREEN_HEIGHT/2 - height/2
+        libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
+
+        libtcod.console_flush()
+        while True:
+            ui.poll()
+            if (ui.mouse.wheel_up or ui.key.vk == libtcod.KEY_UP or
+                ui.key.vk == libtcod.KEY_KP8):
+                offset = offset - 1
+                break
+            if (ui.mouse.wheel_down or ui.key.vk == libtcod.KEY_DOWN or
+                ui.key.vk == libtcod.KEY_KP2):
+                offset = offset + 1
+                break
+            if (ui.key.vk == libtcod.KEY_PAGEUP or
+                ui.key.vk == libtcod.KEY_KP9):
+                offset = offset - height
+                break
+            if (ui.key.vk == libtcod.KEY_PAGEDOWN or
+                ui.key.vk == libtcod.KEY_KP3):
+                offset = offset + height
+                break
+            if (ui.key.vk == libtcod.KEY_ALT or
+                ui.key.vk == libtcod.KEY_CONTROL or
+                ui.key.vk == libtcod.KEY_SHIFT or
+                ui.key.vk == libtcod.KEY_NONE):
+                break;
+            return;
 
 
 def main_menu(new_game, play_game, load_game):
