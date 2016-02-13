@@ -8,7 +8,7 @@ class Room(algebra.Rect):
 
     def isIn(self, x, y):
         if (x > self.x1 and x <= self.x2 and 
-            y > self.y1 and y < self.y2):
+            y > self.y1 and y <= self.y2):
             return True
 
         return False
