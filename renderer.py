@@ -317,7 +317,7 @@ def _debug_room(player):
     global _panel
     room_index = -1
     for r in player.current_map.rooms:
-        if r.isIn(player.x, player.y):
+        if r.contains(player.pos):
             room_index = player.current_map.rooms.index(r)
             break
     if (room_index != -1):
