@@ -54,6 +54,9 @@ class Location(object):
         if (self.y < rect.y1):
             self.y = rect.y1
 
+    def to_string(self):
+        return str(self.x) + ', ' + str(self.y)
+
 
 class Direction(object):
     def __init__(self, x, y):

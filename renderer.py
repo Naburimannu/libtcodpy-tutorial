@@ -302,15 +302,14 @@ def update_camera(player):
 def _debug_positions(player, mouse):
     global _panel
     libtcod.console_print_ex(
-        _panel, 1, 4, libtcod.BKGND_NONE,
-        libtcod.LEFT, '  @x ' + str(player.x) + ' y ' + str(player.y))
+        _panel, 15, 4, libtcod.BKGND_NONE,
+        libtcod.RIGHT, '  @ ' + player.pos.to_string())
     libtcod.console_print_ex(
-        _panel, 1, 5, libtcod.BKGND_NONE,
-        libtcod.LEFT, '  mx ' + str(mouse.cx) + ' y ' + str(mouse.cy))
+        _panel, 15, 5, libtcod.BKGND_NONE,
+        libtcod.RIGHT, '  m ' + str(mouse.cx) + ', ' + str(mouse.cy))
     libtcod.console_print_ex(
-        _panel, 1, 6, libtcod.BKGND_NONE,
-        libtcod.LEFT, 'camx ' + str(player.camera_position.x) +
-                      ' y ' + str(player.camera_position.y))
+        _panel, 15, 6, libtcod.BKGND_NONE,
+        libtcod.RIGHT, 'cam ' + player.camera_position.to_string())
 
 
 def _debug_room(player):
