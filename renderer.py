@@ -64,10 +64,11 @@ def log_display(width=60):
 
 def _write_log(messages, window, x, initial_y):
     y = initial_y
-    for (line, color, count) in messages:
-        libtcod.console_set_default_foreground(window, color)
-        if count > 1:
-            line += ' (x' + str(count) + ')'
+    for m in messages:
+        libtcod.console_set_default_foreground(window, m.color)
+        line = m.message
+        if m.count > 1:
+            line += ' (x' + str(m.count) + ')'
         libtcod.console_print_ex(window, x, y, libtcod.BKGND_NONE,
                                  libtcod.LEFT, line)
         y += 1

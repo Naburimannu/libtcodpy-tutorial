@@ -15,7 +15,19 @@ MSG_WIDTH = config.SCREEN_WIDTH - config.BAR_WIDTH - 2
 # Number of lines of messages normally displayed on screen
 MSG_HEIGHT = config.PANEL_HEIGHT - 1
 # Number of lines of messages retained for history display (^p)
-MSG_LIMIT = 50
+MSG_LIMIT = 150
+
+
+class ExplicitMessage(object):
+    def __init__(self, message, color, count):
+        self.message = message
+        self.color = color
+        self.count = count
+
+    def can_merge(self, other):
+        return (self.message == other.message and
+                self.color == other.color and
+                self.count + other.count < 10)
 
 
 def init():
@@ -38,10 +50,8 @@ def message(new_msg, color=libtcod.white):
         # If the buffer is full, remove the first line to make room for the new one.
         if len(game_msgs) == MSG_LIMIT:
             del game_msgs[0]
-        if not(game_msgs == []):
-            (last_line, last_color, last_count) = game_msgs[-1]
-            if (line == last_line and color == last_color and
-                last_count < 9):
-                game_msgs[-1] = (line, color, last_count + 1)
-                return
-        game_msgs.append((line, color, 1))
+        new_message = ExplicitMessage(line, color, 1)
+        if game_msgs and game_msgs[-1].can_merge(new_message):
+            game_msgs[-1].count += 1
+            return
+        game_msgs.append(new_message)
