@@ -23,16 +23,16 @@ LIMIT_FPS = 20
 class ScreenCoords(tuple):
     @staticmethod
     def fromWorldCoords(camera_coords, world_coords):
-        x = world_coords[0] - camera_coords[0]
-        y = world_coords[1] - camera_coords[1]
+        x = world_coords.x - camera_coords.x
+        y = world_coords.y - camera_coords.y
         if (x < 0 or y < 0 or x >= config.MAP_PANEL_WIDTH or y >= config.MAP_PANEL_HEIGHT):
             return ScreenCoords((None, None))
         return ScreenCoords((x, y))
 
     @staticmethod
     def toWorldCoords(camera_coords, screen_coords):
-        x = screen_coords[0] + camera_coords[0]
-        y = screen_coords[1] + camera_coords[1]
+        x = screen_coords[0] + camera_coords.x
+        y = screen_coords[1] + camera_coords.y
         return algebra.Location(x, y)
 
 
@@ -184,7 +184,7 @@ def _get_names_under_mouse(player, objects, fov_map, mouse):
                                         (mouse.cx, mouse.cy))
 
     names = [obj.name for obj in objects
-             if obj.x == pos.x and obj.y == pos.y and
+             if obj.pos == pos and
              libtcod.map_is_in_fov(fov_map, obj.x, obj.y)]
 
     names = ', '.join(names)
@@ -197,9 +197,9 @@ def _draw_object(o, player):
     global _con
     if (libtcod.map_is_in_fov(player.current_map.fov_map, o.x, o.y) or
             (o.always_visible and
-             player.current_map.is_explored(algebra.Location(o.x, o.y)))):
+             player.current_map.is_explored(o.pos))):
         libtcod.console_set_default_foreground(_con, o.color)
-        (x, y) = ScreenCoords.fromWorldCoords(player.camera_position, (o.x, o.y))
+        (x, y) = ScreenCoords.fromWorldCoords(player.camera_position, o.pos)
         libtcod.console_put_char(_con, x, y, o.char, libtcod.BKGND_NONE)
 
 
@@ -208,7 +208,7 @@ def clear_object(player, o):
     Erase the character that represents this object.
     """
     global _con
-    (x, y) = ScreenCoords.fromWorldCoords(player.camera_position, (o.x, o.y))
+    (x, y) = ScreenCoords.fromWorldCoords(player.camera_position, o.pos)
     libtcod.console_put_char(_con, x, y, ' ', libtcod.BKGND_NONE)
 
 
@@ -284,22 +284,19 @@ def _draw_fov(player):
                     _set(_con, screen_x, screen_y, color_light_ground, libtcod.BKGND_SET)
                 current_map.explore(pos)
 
+
+
 def update_camera(player):
-    x = player.x - config.MAP_PANEL_WIDTH / 2
-    y = player.y - config.MAP_PANEL_HEIGHT / 2
-
+    newPos = player.pos - algebra.Location(config.MAP_PANEL_WIDTH / 2,
+                                           config.MAP_PANEL_HEIGHT / 2)
     # Make sure the camera doesn't see outside the map.
-    if x > player.current_map.width - config.MAP_PANEL_WIDTH:
-        x = player.current_map.width - config.MAP_PANEL_WIDTH
-    if y > player.current_map.height - config.MAP_PANEL_HEIGHT:
-        y = player.current_map.height - config.MAP_PANEL_HEIGHT
-    if x < 0: x = 0
-    if y < 0: y = 0
+    newPos.bound(algebra.Rect(0, 0, 
+        player.current_map.width - config.MAP_PANEL_WIDTH,
+        player.current_map.height - config.MAP_PANEL_HEIGHT))
 
-    if (x, y) != player.camera_position:
+    if newPos != player.camera_position:
         player.current_map.fov_needs_recompute = True
-
-    player.camera_position = (x, y)
+        player.camera_position = newPos
 
 
 def _debug_positions(player, mouse):
@@ -312,8 +309,8 @@ def _debug_positions(player, mouse):
         libtcod.LEFT, '  mx ' + str(mouse.cx) + ' y ' + str(mouse.cy))
     libtcod.console_print_ex(
         _panel, 1, 6, libtcod.BKGND_NONE,
-        libtcod.LEFT, 'camx ' + str(player.camera_position[0]) +
-                      ' y ' + str(player.camera_position[1]))
+        libtcod.LEFT, 'camx ' + str(player.camera_position.x) +
+                      ' y ' + str(player.camera_position.y))
 
 
 def _debug_room(player):

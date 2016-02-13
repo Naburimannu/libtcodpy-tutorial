@@ -200,7 +200,7 @@ def make_map(player, dungeon_level):
     new_map = map.Map(config.MAP_HEIGHT, config.MAP_WIDTH, dungeon_level)
     new_map.objects.append(player)
     player.current_map = new_map
-    player.camera_position = (0, 0)
+    player.camera_position = algebra.Location(0, 0)
     new_map.random_seed = libtcod.random_save(0)
     _build_map(player, new_map)
     for new_room in new_map.rooms:

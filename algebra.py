@@ -8,8 +8,8 @@ class Rect(object):
     def __init__(self, x, y, w, h):
         self.x1 = x
         self.y1 = y
-        self.x2 = x + w
-        self.y2 = y + h
+        self.x2 = x + max(0, w)
+        self.y2 = y + max(0, h)
 
     def center(self):
         center_x = (self.x1 + self.x2) / 2
