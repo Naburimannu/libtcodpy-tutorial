@@ -102,13 +102,13 @@ def _place_objects(new_map, room):
             if choice == 'orc':
                 fighter_component = Fighter(hp=20, defense=0, power=4, xp=35, death_function=ai.monster_death)
                 ai_component = AI(ai.basic_monster)
-                monster = Object(pos.x, pos.y, 'o', 'orc', libtcod.desaturated_green,
+                monster = Object(pos, 'o', 'orc', libtcod.desaturated_green,
                                  blocks=True, fighter=fighter_component, ai=ai_component)
 
             elif choice == 'troll':
                 fighter_component = Fighter(hp=30, defense=2, power=8, xp=100, death_function=ai.monster_death)
                 ai_component = AI(ai.basic_monster)
-                monster = Object(pos.x, pos.y, 'T', 'troll', libtcod.darker_green,
+                monster = Object(pos, 'T', 'troll', libtcod.darker_green,
                                  blocks=True, fighter=fighter_component, ai=ai_component)
 
             new_map.objects.append(monster)
@@ -122,27 +122,27 @@ def _place_objects(new_map, room):
             choice = _random_choice(item_chances)
             if choice == 'heal':
                 item_component = Item(use_function=spells.cast_heal)
-                item = Object(pos.x, pos.y, '!', 'healing potion', libtcod.violet, item=item_component)
+                item = Object(pos, '!', 'healing potion', libtcod.violet, item=item_component)
 
             elif choice == 'lightning':
                 item_component = Item(use_function=spells.cast_lightning)
-                item = Object(pos.x, pos.y, '#', 'scroll of lightning bolt', libtcod.light_yellow, item=item_component)
+                item = Object(pos, '#', 'scroll of lightning bolt', libtcod.light_yellow, item=item_component)
 
             elif choice == 'fireball':
                 item_component = Item(use_function=spells.cast_fireball)
-                item = Object(pos.x, pos.y, '#', 'scroll of fireball', libtcod.light_yellow, item=item_component)
+                item = Object(pos, '#', 'scroll of fireball', libtcod.light_yellow, item=item_component)
 
             elif choice == 'confuse':
                 item_component = Item(use_function=spells.cast_confuse)
-                item = Object(pos.x, pos.y, '#', 'scroll of confusion', libtcod.light_yellow, item=item_component)
+                item = Object(pos, '#', 'scroll of confusion', libtcod.light_yellow, item=item_component)
 
             elif choice == 'sword':
                 equipment_component = Equipment(slot='right hand', power_bonus=3)
-                item = Object(pos.x, pos.y, '/', 'sword', libtcod.sky, equipment=equipment_component)
+                item = Object(pos, '/', 'sword', libtcod.sky, equipment=equipment_component)
 
             elif choice == 'shield':
                 equipment_component = Equipment(slot='left hand', defense_bonus=1)
-                item = Object(pos.x, pos.y, '[', 'shield', libtcod.darker_orange, equipment=equipment_component)
+                item = Object(pos, '[', 'shield', libtcod.darker_orange, equipment=equipment_component)
 
             new_map.objects.insert(0, item)
             item.always_visible = True  # Items are visible even out-of-FOV, if in an explored area
@@ -168,23 +168,23 @@ def _build_map(player, new_map):
         if not failed:
             # There are no intersections, so this room is valid.
             _create_room(new_map, new_room)
-            (new_x, new_y) = new_room.center()
+            new_ctr = new_room.center()
 
             if num_rooms > 0:
-                (prev_x, prev_y) = new_map.rooms[num_rooms-1].center()
+                prev_ctr = new_map.rooms[num_rooms-1].center()
 
                 if libtcod.random_get_int(new_map.rng, 0, 1) == 1:
-                    _create_h_tunnel(new_map, prev_x, new_x, prev_y)
-                    _create_v_tunnel(new_map, prev_y, new_y, new_x)
+                    _create_h_tunnel(new_map, prev_ctr.x, new_ctr.x, prev_ctr.y)
+                    _create_v_tunnel(new_map, prev_ctr.y, new_ctr.y, new_ctr.x)
                 else:
-                    _create_v_tunnel(new_map, prev_y, new_y, prev_x)
-                    _create_h_tunnel(new_map, prev_x, new_x, new_y)
+                    _create_v_tunnel(new_map, prev_ctr.y, new_ctr.y, prev_ctr.x)
+                    _create_h_tunnel(new_map, prev_ctr.x, new_ctr.x, new_ctr.y)
 
             new_map.rooms.append(new_room)
             num_rooms += 1
 
     # Create stairs at the center of the last room.
-    stairs = Object(new_x, new_y, '<', 'stairs down', libtcod.white, always_visible=True)
+    stairs = Object(new_ctr, '<', 'stairs down', libtcod.white, always_visible=True)
     stairs.destination = None
     stairs.dest_position = None
     new_map.objects.insert(0, stairs)
@@ -205,8 +205,7 @@ def make_map(player, dungeon_level):
     _build_map(player, new_map)
     for new_room in new_map.rooms:
         _place_objects(new_map, new_room)
-    center = new_map.rooms[0].center()
-    player.pos = algebra.Location(center[0], center[1])
+    player.pos = new_map.rooms[0].center()
 
     new_map.initialize_fov()
     return new_map

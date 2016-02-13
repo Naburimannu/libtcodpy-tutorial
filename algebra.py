@@ -12,9 +12,8 @@ class Rect(object):
         self.y2 = y + max(0, h)
 
     def center(self):
-        center_x = (self.x1 + self.x2) / 2
-        center_y = (self.y1 + self.y2) / 2
-        return (center_x, center_y)
+        return Location((self.x1 + self.x2) / 2,
+                        (self.y1 + self.y2) / 2)
 
     def intersect(self, other):
         """
@@ -46,7 +45,7 @@ class Location(object):
         if (self.x > rect.x2):
             self.x = rect.x2
         if (self.y > rect.y2):
-            self.y = self.y2
+            self.y = rect.y2
         if (self.x < rect.x1):
             self.x = rect.x1
         if (self.y < rect.y1):

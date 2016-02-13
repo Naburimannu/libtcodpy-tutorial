@@ -191,7 +191,7 @@ def _get_names_under_mouse(player, objects, fov_map, mouse):
     return names.capitalize()
 
 
-def _draw_object(o, player):
+def _draw_object(player, o):
     # Show if it's visible to the player
     # or it's set to "always visible" and on an explored tile.
     global _con
@@ -349,7 +349,7 @@ def render_all(player, mouse):
     # the last object in current_map.objects.)
     for object in current_map.objects:
         if object != player:
-            _draw_object(object, player)
+            _draw_object(player, object)
     _draw_object(player, player)
 
     libtcod.console_blit(_con, 0, 0, config.MAP_PANEL_WIDTH,

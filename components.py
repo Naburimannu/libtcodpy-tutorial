@@ -10,11 +10,9 @@ class Object:
     This is a generic object: the player, a monster, an item, the stairs...
     It's always represented by a character on screen.
     """
-    def __init__(self, x, y, char, name, color, blocks=False, always_visible=False,
+    def __init__(self, pos, char, name, color, blocks=False, always_visible=False,
                  fighter=None, ai=None, item=None, equipment=None):
-        #self.x = x
-        #self.y = y
-        self.pos = algebra.Location(x, y)
+        self.pos = pos
         self.char = char
         self.name = name
         self.color = color

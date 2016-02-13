@@ -248,13 +248,13 @@ def new_game():
     log.init()
 
     fighter_component = Fighter(hp=100, defense=1, power=2, xp=0, death_function=player_death)
-    player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component)
+    player = Object(algebra.Location(0, 0), '@', 'player', libtcod.white, blocks=True, fighter=fighter_component)
     player.inventory = []
     player.level = 1
     player.game_state = 'playing'
 
     equipment_component = Equipment(slot='right hand', power_bonus=2)
-    obj = Object(0, 0, '-', 'dagger', libtcod.sky, equipment=equipment_component)
+    obj = Object(algebra.Location(0, 0), '-', 'dagger', libtcod.sky, equipment=equipment_component)
     player.inventory.append(obj)
     actions.equip(player, equipment_component, False)
     obj.always_visible = True
@@ -284,7 +284,7 @@ def next_level(player, portal):
     renderer.update_camera(player)
 
     # Create the up stairs at the current position.
-    stairs = Object(player.x, player.y, '>', 'stairs up', libtcod.white, always_visible=True)
+    stairs = Object(player.pos, '>', 'stairs up', libtcod.white, always_visible=True)
     stairs.destination = old_map
     stairs.dest_position = portal.pos
     player.current_map.objects.insert(0, stairs)
