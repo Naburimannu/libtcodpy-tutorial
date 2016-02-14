@@ -2,6 +2,7 @@ import libtcodpy as libtcod
 
 import algebra
 
+
 class Room(algebra.Rect):
     def __init__(self, x, y, w, h):
         super(self.__class__, self).__init__(x, y, w, h)
@@ -65,4 +66,3 @@ class Map(object):
 
     def out_of_bounds(self, pos):
         return "You can't go that way!"
-

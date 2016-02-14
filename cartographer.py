@@ -188,7 +188,10 @@ def _build_map(new_map):
     stairs.destination = None
     stairs.dest_position = None
     new_map.objects.insert(0, stairs)
-    new_map.portals.insert(0, stairs)        
+    new_map.portals.insert(0, stairs)
+
+    # Test - tunnel off the right edge
+    # _create_h_tunnel(new_map, new_ctr.x, new_map.width-1, new_ctr.y)
 
 
 def make_map(player, dungeon_level):

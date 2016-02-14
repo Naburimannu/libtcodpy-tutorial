@@ -55,8 +55,8 @@ def player_move_or_attack(player, direction, try_running):
     """
     goal = player.pos + direction
     if (goal.x < 0 or goal.y < 0 or
-        goal.x >= player.current_map.width or
-        goal.y >= player.current_map.height):
+            goal.x >= player.current_map.width or
+            goal.y >= player.current_map.height):
         log.message(player.current_map.out_of_bounds(goal))
         return False
 
@@ -116,14 +116,16 @@ def display_character_info(player):
 
 def try_stairs(player):
     for f in player.current_map.portals:
-        if f.x == player.x and f.y == player.y:
-            if f.destination == None:
+        if f.pos == player.pos:
+            if f.destination is None:
                 f.destination = next_level(player, f)
+                # player.pos was changed by next_level()!
                 f.dest_position = player.pos
-                break
+                return True
             else:
                 revisit_level(player, f)
-                break
+                return True
+    return False
 
 
 def handle_keys(player):
@@ -150,28 +152,28 @@ def handle_keys(player):
     if player.game_state == 'playing':
         # movement keys
         if (key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8 or
-            key_char == 'k' or key_char == 'K'):
+                key_char == 'k' or key_char == 'K'):
             player_move_or_attack(player, algebra.north, key.shift)
         elif (key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2 or
-             key_char == 'j' or key_char == 'J'):
+              key_char == 'j' or key_char == 'J'):
             player_move_or_attack(player, algebra.south, key.shift)
         elif (key.vk == libtcod.KEY_LEFT or key.vk == libtcod.KEY_KP4 or
-             key_char == 'h' or key_char == 'H'):
+              key_char == 'h' or key_char == 'H'):
             player_move_or_attack(player, algebra.west, key.shift)
         elif (key.vk == libtcod.KEY_RIGHT or key.vk == libtcod.KEY_KP6 or
-             key_char == 'l' or key_char == 'L'):
+              key_char == 'l' or key_char == 'L'):
             player_move_or_attack(player, algebra.east, key.shift)
         elif (key.vk == libtcod.KEY_HOME or key.vk == libtcod.KEY_KP7 or
-             key_char == 'y' or key_char == 'Y'):
+              key_char == 'y' or key_char == 'Y'):
             player_move_or_attack(player, algebra.northwest, key.shift)
         elif (key.vk == libtcod.KEY_PAGEUP or key.vk == libtcod.KEY_KP9 or
-             key_char == 'u' or key_char == 'U'):
+              key_char == 'u' or key_char == 'U'):
             player_move_or_attack(player, algebra.northeast, key.shift)
         elif (key.vk == libtcod.KEY_END or key.vk == libtcod.KEY_KP1 or
-             key_char == 'b' or key_char == 'B'):
+              key_char == 'b' or key_char == 'B'):
             player_move_or_attack(player, algebra.southwest, key.shift)
-        elif (key.vk == libtcod.KEY_PAGEDOWN or key.vk == libtcod.KEY_KP3
-             or key_char == 'n' or key_char == 'N'):
+        elif (key.vk == libtcod.KEY_PAGEDOWN or key.vk == libtcod.KEY_KP3 or
+              key_char == 'n' or key_char == 'N'):
             player_move_or_attack(player, algebra.southeast, key.shift)
         elif (key.vk == libtcod.KEY_KP5 or key_char == '.'):
             # do nothing
@@ -356,9 +358,9 @@ def play_game(player):
             save_game(player)
             break
 
-        if ((player.game_state == 'playing' or
-             player.game_state == 'running') and
-            player_action != 'didnt-take-turn'):
+        if (player_action != 'didnt-take-turn' and
+            (player.game_state == 'playing' or
+             player.game_state == 'running')):
             for object in player.current_map.objects:
                 if object.ai:
                     object.ai.take_turn(player)

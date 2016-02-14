@@ -34,7 +34,7 @@ def _target_tile(actor, max_range=None):
         actor.current_map.fov_needs_recompute = False
 
         pos = renderer.ScreenCoords.toWorldCoords(actor.camera_position,
-                                                     (ui.mouse.cx, ui.mouse.cy))
+                                                  (ui.mouse.cx, ui.mouse.cy))
 
         if ui.mouse.rbutton_pressed or ui.key.vk == libtcod.KEY_ESCAPE:
             return None

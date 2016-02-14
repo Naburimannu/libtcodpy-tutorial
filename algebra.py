@@ -32,6 +32,7 @@ class Rect(object):
         return (location.x > self.x1 and location.x <= self.x2 and
                 location.y > self.y1 and location.y <= self.y2)
 
+
 class Location(object):
     def __init__(self, x, y):
         self.x = x
@@ -94,4 +95,3 @@ northwest = Direction(-1, -1)
 northeast = Direction(1, -1)
 southwest = Direction(-1, 1)
 southeast = Direction(1, 1)
-

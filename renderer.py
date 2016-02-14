@@ -102,27 +102,27 @@ def colored_text_list(lines, width):
         while True:
             ui.poll()
             if (ui.mouse.wheel_up or ui.key.vk == libtcod.KEY_UP or
-                ui.key.vk == libtcod.KEY_KP8):
+                    ui.key.vk == libtcod.KEY_KP8):
                 offset = offset - 1
                 break
             if (ui.mouse.wheel_down or ui.key.vk == libtcod.KEY_DOWN or
-                ui.key.vk == libtcod.KEY_KP2):
+                    ui.key.vk == libtcod.KEY_KP2):
                 offset = offset + 1
                 break
             if (ui.key.vk == libtcod.KEY_PAGEUP or
-                ui.key.vk == libtcod.KEY_KP9):
+                    ui.key.vk == libtcod.KEY_KP9):
                 offset = offset - height
                 break
             if (ui.key.vk == libtcod.KEY_PAGEDOWN or
-                ui.key.vk == libtcod.KEY_KP3):
+                    ui.key.vk == libtcod.KEY_KP3):
                 offset = offset + height
                 break
             if (ui.key.vk == libtcod.KEY_ALT or
-                ui.key.vk == libtcod.KEY_CONTROL or
-                ui.key.vk == libtcod.KEY_SHIFT or
-                ui.key.vk == libtcod.KEY_NONE):
-                break;
-            return;
+                    ui.key.vk == libtcod.KEY_CONTROL or
+                    ui.key.vk == libtcod.KEY_SHIFT or
+                    ui.key.vk == libtcod.KEY_NONE):
+                break
+            return
 
 
 def main_menu(new_game, play_game, load_game):
@@ -182,7 +182,7 @@ def _render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
 
 def _get_names_under_mouse(player, objects, fov_map, mouse):
     pos = ScreenCoords.toWorldCoords(player.camera_position,
-                                        (mouse.cx, mouse.cy))
+                                     (mouse.cx, mouse.cy))
 
     names = [obj.name for obj in objects
              if obj.pos == pos and
@@ -252,7 +252,7 @@ def menu(header, options, width):
         key = libtcod.console_wait_for_keypress(True)
         if not (key.vk == libtcod.KEY_ALT or key.vk == libtcod.KEY_CONTROL or
                 key.vk == libtcod.KEY_SHIFT):
-            break;
+            break
 
     index = key.c - ord('a')
     if index >= 0 and index < len(options):
@@ -270,7 +270,7 @@ def _draw_fov(player):
     for screen_y in range(min(current_map.height, config.MAP_PANEL_HEIGHT)):
         for screen_x in range(min(current_map.width, config.MAP_PANEL_WIDTH)):
             pos = ScreenCoords.toWorldCoords(player.camera_position,
-                                                        (screen_x, screen_y))
+                                             (screen_x, screen_y))
             visible = libtcod.map_is_in_fov(current_map.fov_map, pos.x, pos.y)
             wall = current_map.block_sight[pos.x][pos.y]
             if not visible:
@@ -288,14 +288,13 @@ def _draw_fov(player):
                 current_map.explore(pos)
 
 
-
 def update_camera(player):
     newPos = player.pos - algebra.Location(config.MAP_PANEL_WIDTH / 2,
                                            config.MAP_PANEL_HEIGHT / 2)
     # Make sure the camera doesn't see outside the map.
-    newPos.bound(algebra.Rect(0, 0, 
-        player.current_map.width - config.MAP_PANEL_WIDTH,
-        player.current_map.height - config.MAP_PANEL_HEIGHT))
+    newPos.bound(algebra.Rect(0, 0,
+                 player.current_map.width - config.MAP_PANEL_WIDTH,
+                 player.current_map.height - config.MAP_PANEL_HEIGHT))
 
     if newPos != player.camera_position:
         player.current_map.fov_needs_recompute = True
@@ -327,6 +326,13 @@ def _debug_room(player):
             _panel, 1, 4, libtcod.BKGND_NONE,
             libtcod.LEFT, 'Room ' + str(room_index + 1))
 
+
+def _debug_danger(player):
+    global _panel
+    if player.endangered:
+        libtcod.console_print_ex(
+            _panel, 1, 2, libtcod.BKGND_NONE,
+            libtcod.LEFT, 'DANGER')
 
 
 def render_all(player, mouse):
@@ -371,12 +377,9 @@ def render_all(player, mouse):
     libtcod.console_print_ex(
         _panel, 1, 3, libtcod.BKGND_NONE,
         libtcod.LEFT, 'Dungeon level ' + str(current_map.dungeon_level))
-    _debug_positions(player, mouse)
-    #_debug_room(player)
-    if player.endangered:
-        libtcod.console_print_ex(
-            _panel, 1, 2, libtcod.BKGND_NONE,
-            libtcod.LEFT, 'DANGER')
+    # _debug_positions(player, mouse)
+    # _debug_room(player)
+    # _debug_danger(player)
 
     libtcod.console_set_default_foreground(_panel, libtcod.light_gray)
     libtcod.console_print_ex(
