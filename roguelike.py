@@ -54,6 +54,11 @@ def player_move_or_attack(player, direction, try_running):
     false if the attempt to move fails.
     """
     goal = player.pos + direction
+    if (goal.x < 0 or goal.y < 0 or
+        goal.x >= player.current_map.width or
+        goal.y >= player.current_map.height):
+        log.message(player.current_map.out_of_bounds(goal))
+        return False
 
     # Is there an attackable object?
     target = None

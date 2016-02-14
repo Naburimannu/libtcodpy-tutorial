@@ -62,3 +62,7 @@ class Map(object):
 
     def explore(self, pos):
         self._explored[pos.x][pos.y] = True
+
+    def out_of_bounds(self, pos):
+        return "You can't go that way!"
+
