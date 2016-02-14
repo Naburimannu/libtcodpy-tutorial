@@ -252,6 +252,8 @@ def new_game():
     player.inventory = []
     player.level = 1
     player.game_state = 'playing'
+    # True if there's a (hostile) fighter in FOV
+    player.endangered = False
 
     equipment_component = Equipment(slot='right hand', power_bonus=2)
     obj = Object(algebra.Location(0, 0), '-', 'dagger', libtcod.sky, equipment=equipment_component)

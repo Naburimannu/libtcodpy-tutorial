@@ -202,6 +202,8 @@ def _draw_object(player, o):
         libtcod.console_set_default_foreground(_con, o.color)
         (x, y) = ScreenCoords.fromWorldCoords(player.camera_position, o.pos)
         libtcod.console_put_char(_con, x, y, o.char, libtcod.BKGND_NONE)
+        if o.fighter:
+            player.endangered = True
 
 
 def clear_object(player, o):
@@ -347,6 +349,8 @@ def render_all(player, mouse):
     # always appear over all other objects, so it's drawn later.
     # (Could also achieve this by guaranteeing the player is always
     # the last object in current_map.objects.)
+    # If we spot a monster while drawing, set endangered to True.
+    player.endangered = False
     for object in current_map.objects:
         if object != player:
             _draw_object(player, object)
