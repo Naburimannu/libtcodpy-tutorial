@@ -48,7 +48,11 @@ def try_use(player):
         actions.use(player, chosen_item.owner)
 
 
-def player_move_or_attack(player, direction):
+def player_move_or_attack(player, direction, try_running):
+    """
+    Returns true if the player makes an attack or moves successfully;
+    false if the attempt to move fails.
+    """
     goal = player.pos + direction
 
     # Is there an attackable object?
@@ -60,9 +64,16 @@ def player_move_or_attack(player, direction):
 
     if target is not None:
         actions.attack(player.fighter, target)
+        return True
     else:
         if actions.move(player, direction):
             player.current_map.fov_needs_recompute = True
+            if try_running:
+                player.game_state = 'running'
+                player.run_direction = direction
+            return True
+
+    return False
 
 
 def inventory_menu(player, header):
@@ -127,32 +138,36 @@ def handle_keys(player):
     elif key_char == 'p' and (key.lctrl or key.rctrl):
         renderer.log_display()
 
+    if player.game_state == 'running':
+        if player.endangered or not player_move_or_attack(player, player.run_direction, False):
+            player.game_state = 'playing'
+
     if player.game_state == 'playing':
         # movement keys
         if (key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8 or
-            key_char == 'k'):
-            player_move_or_attack(player, algebra.north)
+            key_char == 'k' or key_char == 'K'):
+            player_move_or_attack(player, algebra.north, key.shift)
         elif (key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2 or
-             key_char == 'j'):
-            player_move_or_attack(player, algebra.south)
+             key_char == 'j' or key_char == 'J'):
+            player_move_or_attack(player, algebra.south, key.shift)
         elif (key.vk == libtcod.KEY_LEFT or key.vk == libtcod.KEY_KP4 or
-             key_char == 'h'):
-            player_move_or_attack(player, algebra.west)
+             key_char == 'h' or key_char == 'H'):
+            player_move_or_attack(player, algebra.west, key.shift)
         elif (key.vk == libtcod.KEY_RIGHT or key.vk == libtcod.KEY_KP6 or
-             key_char == 'l'):
-            player_move_or_attack(player, algebra.east)
+             key_char == 'l' or key_char == 'L'):
+            player_move_or_attack(player, algebra.east, key.shift)
         elif (key.vk == libtcod.KEY_HOME or key.vk == libtcod.KEY_KP7 or
-             key_char == 'y'):
-            player_move_or_attack(player, algebra.northwest)
+             key_char == 'y' or key_char == 'Y'):
+            player_move_or_attack(player, algebra.northwest, key.shift)
         elif (key.vk == libtcod.KEY_PAGEUP or key.vk == libtcod.KEY_KP9 or
-             key_char == 'u'):
-            player_move_or_attack(player, algebra.northeast)
+             key_char == 'u' or key_char == 'U'):
+            player_move_or_attack(player, algebra.northeast, key.shift)
         elif (key.vk == libtcod.KEY_END or key.vk == libtcod.KEY_KP1 or
-             key_char == 'b'):
-            player_move_or_attack(player, algebra.southwest)
+             key_char == 'b' or key_char == 'B'):
+            player_move_or_attack(player, algebra.southwest, key.shift)
         elif (key.vk == libtcod.KEY_PAGEDOWN or key.vk == libtcod.KEY_KP3
-             or key_char == 'n'):
-            player_move_or_attack(player, algebra.southeast)
+             or key_char == 'n' or key_char == 'N'):
+            player_move_or_attack(player, algebra.southeast, key.shift)
         elif (key.vk == libtcod.KEY_KP5 or key_char == '.'):
             # do nothing
             pass
@@ -336,7 +351,9 @@ def play_game(player):
             save_game(player)
             break
 
-        if player.game_state == 'playing' and player_action != 'didnt-take-turn':
+        if ((player.game_state == 'playing' or
+             player.game_state == 'running') and
+            player_action != 'didnt-take-turn'):
             for object in player.current_map.objects:
                 if object.ai:
                     object.ai.take_turn(player)

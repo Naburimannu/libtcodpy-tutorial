@@ -202,7 +202,7 @@ def _draw_object(player, o):
         libtcod.console_set_default_foreground(_con, o.color)
         (x, y) = ScreenCoords.fromWorldCoords(player.camera_position, o.pos)
         libtcod.console_put_char(_con, x, y, o.char, libtcod.BKGND_NONE)
-        if o.fighter:
+        if o.fighter and o != player:
             player.endangered = True
 
 
@@ -372,7 +372,11 @@ def render_all(player, mouse):
         _panel, 1, 3, libtcod.BKGND_NONE,
         libtcod.LEFT, 'Dungeon level ' + str(current_map.dungeon_level))
     _debug_positions(player, mouse)
-    #_debug_room(player)    
+    #_debug_room(player)
+    if player.endangered:
+        libtcod.console_print_ex(
+            _panel, 1, 2, libtcod.BKGND_NONE,
+            libtcod.LEFT, 'DANGER')
 
     libtcod.console_set_default_foreground(_panel, libtcod.light_gray)
     libtcod.console_print_ex(
