@@ -148,7 +148,7 @@ def _place_objects(new_map, room):
             item.always_visible = True  # Items are visible even out-of-FOV, if in an explored area
 
 
-def _build_map(player, new_map):
+def _build_map(new_map):
     new_map.rng = libtcod.random_new_from_seed(new_map.random_seed)
     num_rooms = 0
     for r in range(MAX_ROOMS):
@@ -202,10 +202,33 @@ def make_map(player, dungeon_level):
     player.current_map = new_map
     player.camera_position = algebra.Location(0, 0)
     new_map.random_seed = libtcod.random_save(0)
-    _build_map(player, new_map)
+    _build_map(new_map)
     for new_room in new_map.rooms:
         _place_objects(new_map, new_room)
     player.pos = new_map.rooms[0].center()
 
     new_map.initialize_fov()
     return new_map
+
+
+def _test_map_repeatability():
+    """
+    Require that two calls to _build_map() with the same seed produce the
+    same corridors and rooms.
+    """
+    map1 = map.Map(config.MAP_HEIGHT, config.MAP_WIDTH, 3)
+    map1.random_seed = libtcod.random_save(0)
+    _build_map(map1)
+
+    map2 = map.Map(config.MAP_HEIGHT, config.MAP_WIDTH, 3)
+    map2.random_seed = map1.random_seed
+    _build_map(map2)
+
+    assert map1.block_sight == map2.block_sight
+    assert map1.blocked == map2.blocked
+    for i in range(len(map1.rooms)):
+        assert map1.rooms[i] == map2.rooms[i]
+
+if __name__ == '__main__':
+    _test_map_repeatability()
+    print('Cartographer tests complete.')

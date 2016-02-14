@@ -11,6 +11,12 @@ class Rect(object):
         self.x2 = x + max(0, w)
         self.y2 = y + max(0, h)
 
+    def __eq__(self, other):
+        return (self.x1 == other.x1 and
+                self.x2 == other.x2 and
+                self.y1 == other.y1 and
+                self.y2 == other.y2)
+
     def center(self):
         return Location((self.x1 + self.x2) / 2,
                         (self.y1 + self.y2) / 2)

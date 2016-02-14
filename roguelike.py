@@ -358,6 +358,6 @@ def play_game(player):
                 if object.ai:
                     object.ai.take_turn(player)
 
-
-renderer.renderer_init()
-renderer.main_menu(new_game, play_game, load_game)
+if __name__ == '__main__':
+    renderer.renderer_init()
+    renderer.main_menu(new_game, play_game, load_game)
