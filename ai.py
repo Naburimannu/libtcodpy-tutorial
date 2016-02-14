@@ -14,15 +14,20 @@ import actions
 CONFUSE_NUM_TURNS = 10
 
 
+class basic_monster_metadata:
+    def __init__(self, target):
+        self.target = target
+
+
 def basic_monster(monster, player, metadata):
     """
     A basic monster takes its turn. if you can see it, it can see you.
     """
     if libtcod.map_is_in_fov(monster.current_map.fov_map, monster.x, monster.y):
-        if monster.distance_to(player) >= 2:
-            actions.move_towards(monster, player.x, player.y)
-        elif player.fighter.hp > 0:
-            actions.attack(monster.fighter, player)
+        if monster.distance_to(metadata.target) >= 2:
+            actions.move_towards(monster, metadata.target.pos)
+        elif metadata.target.fighter.hp > 0:
+            actions.attack(monster.fighter, metadata.target)
 
 
 class confused_monster_metadata:

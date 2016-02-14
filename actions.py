@@ -25,12 +25,12 @@ def move(o, direction):
     return False
 
 
-def move_towards(o, target_x, target_y):
+def move_towards(o, target_pos):
     """
     Moves object one step towards target location.
     Returns true if move succeeded.
     """
-    dir = algebra.Direction(target_x - o.x, target_y - o.y)
+    dir = algebra.Direction(target_pos.x - o.x, target_pos.y - o.y)
     dir.normalize()
     return move(o, dir)
 
