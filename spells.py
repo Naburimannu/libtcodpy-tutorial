@@ -43,7 +43,7 @@ def _target_tile(actor, max_range=None):
         # and within the range specified.
         if (ui.mouse.lbutton_pressed and
                 libtcod.map_is_in_fov(actor.current_map.fov_map, pos.x, pos.y) and
-                (max_range is None or actor.distance(pos.x, pos.y) <= max_range)):
+                (max_range is None or actor.distance(pos) <= max_range)):
             return pos
 
 

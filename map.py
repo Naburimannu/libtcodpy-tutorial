@@ -8,6 +8,21 @@ class Room(algebra.Rect):
         super(self.__class__, self).__init__(x, y, w, h)
 
 
+class Terrain(object):
+    def __init__(self, name, icon, seen_color, unseen_color, blocks, blocks_sight):
+        self.name = name
+        self.icon = icon
+        self.seen_color = seen_color
+        self.unseen_color = unseen_color
+        self.blocks = blocks
+        self.blocks_sight = blocks_sight
+
+terrain_types = [
+        Terrain('wall', None, libtcod.Color(130, 110, 50), libtcod.Color(0, 0, 100), True, True),
+        Terrain('ground', None, libtcod.Color(200, 180, 50), libtcod.Color(50, 50, 150), False, False)
+            ]
+
+
 class Map(object):
     """
     A (width x height) region of tiles, presumably densely occupied.
