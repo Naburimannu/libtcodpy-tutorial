@@ -23,20 +23,17 @@ def _create_room(new_map, room):
     """
     for x in range(room.x1 + 1, room.x2):
         for y in range(room.y1 + 1, room.y2):
-            new_map.blocked[x][y] = False
-            new_map.block_sight[x][y] = False
+            new_map.terrain[x][y] = 1
 
 
 def _create_h_tunnel(new_map, x1, x2, y):
     for x in range(min(x1, x2), max(x1, x2) + 1):
-        new_map.blocked[x][y] = False
-        new_map.block_sight[x][y] = False
+        new_map.terrain[x][y] = 1
 
 
 def _create_v_tunnel(new_map, y1, y2, x):
     for y in range(min(y1, y2), max(y1, y2) + 1):
-        new_map.blocked[x][y] = False
-        new_map.block_sight[x][y] = False
+        new_map.terrain[x][y] = 1
 
 
 def _random_choice_index(chances):
@@ -227,8 +224,7 @@ def _test_map_repeatability():
     map2.random_seed = map1.random_seed
     _build_map(map2)
 
-    assert map1.block_sight == map2.block_sight
-    assert map1.blocked == map2.blocked
+    assert map1.terrain == map2.terrain
     for i in range(len(map1.rooms)):
         assert map1.rooms[i] == map2.rooms[i]
 

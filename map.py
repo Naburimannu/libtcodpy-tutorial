@@ -9,17 +9,18 @@ class Room(algebra.Rect):
 
 
 class Terrain(object):
-    def __init__(self, name, icon, seen_color, unseen_color, blocks, blocks_sight):
+    def __init__(self, name, display_name, icon, seen_color, unseen_color, blocks, blocks_sight):
         self.name = name
-        self.icon = icon
+        self.display_name = display_name # text displayed on mouseover
+        self.icon = icon # character drawn on screen
         self.seen_color = seen_color
         self.unseen_color = unseen_color
         self.blocks = blocks
         self.blocks_sight = blocks_sight
 
 terrain_types = [
-        Terrain('wall', None, libtcod.Color(130, 110, 50), libtcod.Color(0, 0, 100), True, True),
-        Terrain('ground', None, libtcod.Color(200, 180, 50), libtcod.Color(50, 50, 150), False, False)
+        Terrain('wall', None, None, libtcod.Color(130, 110, 50), libtcod.Color(0, 0, 100), True, True),
+        Terrain('ground', None, None, libtcod.Color(200, 180, 50), libtcod.Color(50, 50, 150), False, False)
             ]
 
 
@@ -42,10 +43,9 @@ class Map(object):
 
         self.fov_map = None
 
-        # Maps default to blocked & unexplored
-        self.blocked = [[True for y in range(height)] for x in range(width)]
+        # Maps default to walls (blocked) & unexplored
+        self.terrain = [[0 for y in range(height)] for x in range(width)]
         self._explored = [[False for y in range(height)] for x in range(width)]
-        self.block_sight = [[True for y in range(height)] for x in range(width)]
 
     def initialize_fov(self):
         """
@@ -59,14 +59,18 @@ class Map(object):
             for x in range(self.width):
                 libtcod.map_set_properties(
                     self.fov_map, x, y,
-                    not self.block_sight[x][y], not self.blocked[x][y])
+                    not terrain_types[self.terrain[x][y]].blocks_sight,
+                    not terrain_types[self.terrain[x][y]].blocks)
+
+    def terrain_at(self, pos):
+        return terrain_types[self.terrain[pos.x][pos.y]]
 
     def is_blocked_at(self, pos):
         """
         Returns true if impassible map terrain or any blocking objects
         are at (x, y).
         """
-        if self.blocked[pos.x][pos.y]:
+        if terrain_types[self.terrain[pos.x][pos.y]].blocks:
             return True
         for object in self.objects:
             if object.blocks and object.pos == pos:

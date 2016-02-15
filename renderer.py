@@ -5,10 +5,6 @@ import log
 import algebra
 import ui
 
-color_dark_wall = libtcod.Color(0, 0, 100)
-color_light_wall = libtcod.Color(130, 110, 50)
-color_dark_ground = libtcod.Color(50, 50, 150)
-color_light_ground = libtcod.Color(200, 180, 50)
 
 FOV_ALGO = 0
 FOV_LIGHT_WALLS = True
@@ -264,7 +260,7 @@ def _set(con, x, y, color, mode):
     libtcod.console_set_char_background(con, x, y, color, mode)
 
 
-def _draw_fov(player):
+def _draw_fov_using_terrain(player):
     libtcod.console_clear(_con)
     current_map = player.current_map
     for screen_y in range(min(current_map.height, config.MAP_PANEL_HEIGHT)):
@@ -272,19 +268,12 @@ def _draw_fov(player):
             pos = ScreenCoords.toWorldCoords(player.camera_position,
                                              (screen_x, screen_y))
             visible = libtcod.map_is_in_fov(current_map.fov_map, pos.x, pos.y)
-            wall = current_map.block_sight[pos.x][pos.y]
+            terrain = current_map.terrain_at(pos)
             if not visible:
-                # If it's not visible, only draw if it's explored
                 if current_map.is_explored(pos):
-                    if wall:
-                        _set(_con, screen_x, screen_y, color_dark_wall, libtcod.BKGND_SET)
-                    else:
-                        _set(_con, screen_x, screen_y, color_dark_ground, libtcod.BKGND_SET)
+                    _set(_con, screen_x, screen_y, terrain.unseen_color, libtcod.BKGND_SET)
             else:
-                if wall:
-                    _set(_con, screen_x, screen_y, color_light_wall, libtcod.BKGND_SET)
-                else:
-                    _set(_con, screen_x, screen_y, color_light_ground, libtcod.BKGND_SET)
+                _set(_con, screen_x, screen_y, terrain.seen_color, libtcod.BKGND_SET)
                 current_map.explore(pos)
 
 
@@ -337,8 +326,6 @@ def _debug_danger(player):
 
 def render_all(player, mouse):
     global _con, _panel
-    global color_dark_wall, color_light_wall
-    global color_dark_ground, color_light_ground
 
     current_map = player.current_map
     update_camera(player)
@@ -349,7 +336,7 @@ def render_all(player, mouse):
         libtcod.map_compute_fov(
             current_map.fov_map, player.x,
             player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO)
-        _draw_fov(player)
+        _draw_fov_using_terrain(player)
 
     # Draw all objects in the list, except the player. We want it to
     # always appear over all other objects, so it's drawn later.
