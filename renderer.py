@@ -183,6 +183,8 @@ def _get_names_under_mouse(player, objects, fov_map, mouse):
     names = [obj.name for obj in objects
              if obj.pos == pos and
              libtcod.map_is_in_fov(fov_map, obj.x, obj.y)]
+    if player.current_map.terrain_at(pos).display_name:
+        names.append(player.current_map.terrain_at(pos).display_name)
 
     names = ', '.join(names)
     return names.capitalize()
