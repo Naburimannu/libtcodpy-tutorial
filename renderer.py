@@ -176,7 +176,9 @@ def _render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
         name + ': ' + str(value) + '/' + str(maximum))
 
 
-def _get_names_under_mouse(player, objects, fov_map, mouse):
+def _get_names_under_mouse(player, mouse):
+    objects = player.current_map.objects
+    fov_map = player.current_map.fov_map
     pos = ScreenCoords.toWorldCoords(player.camera_position,
                                      (mouse.cx, mouse.cy))
 
@@ -279,9 +281,19 @@ def _draw_fov_using_terrain(player):
                 current_map.explore(pos)
 
 
+_console_center = algebra.Location(config.MAP_PANEL_WIDTH / 2,
+                                   config.MAP_PANEL_HEIGHT / 2)
+
+
 def update_camera(player):
-    newPos = player.pos - algebra.Location(config.MAP_PANEL_WIDTH / 2,
-                                           config.MAP_PANEL_HEIGHT / 2)
+    """
+    Makes sure the player is roughly centered and that we're not trying to draw off screen.
+    Basic implementation is stateless.
+    """
+    #newPos = player.pos - algebra.Location(config.MAP_PANEL_WIDTH / 2,
+    #                                       config.MAP_PANEL_HEIGHT / 2)
+    newPos = player.pos - _console_center
+
     # Make sure the camera doesn't see outside the map.
     newPos.bound(algebra.Rect(0, 0,
                  player.current_map.width - config.MAP_PANEL_WIDTH,
@@ -326,11 +338,14 @@ def _debug_danger(player):
             libtcod.LEFT, 'DANGER')
 
 
-def render_all(player, mouse):
-    global _con, _panel
+def draw_console(player):
+    """
+    Refreshes the map display and blits to the window.
+    Sets or clears player.endangered.
+    """
+    global _con
 
     current_map = player.current_map
-    update_camera(player)
 
     if current_map.fov_needs_recompute:
         # Recompute FOV if needed (the player moved or something in
@@ -354,6 +369,11 @@ def render_all(player, mouse):
     libtcod.console_blit(_con, 0, 0, config.MAP_PANEL_WIDTH,
                          config.MAP_PANEL_HEIGHT, 0, 0, 0)
 
+
+def draw_panel(player, mouse):
+    """
+    Refreshes the UI display and blits it to the window.
+    """
     libtcod.console_set_default_background(_panel, libtcod.black)
     libtcod.console_clear(_panel)
 
@@ -365,7 +385,7 @@ def render_all(player, mouse):
                 libtcod.light_red, libtcod.darker_red)
     libtcod.console_print_ex(
         _panel, 1, 3, libtcod.BKGND_NONE,
-        libtcod.LEFT, 'Dungeon level ' + str(current_map.dungeon_level))
+        libtcod.LEFT, 'Dungeon level ' + str(player.current_map.dungeon_level))
     # _debug_positions(player, mouse)
     # _debug_room(player)
     # _debug_danger(player)
@@ -373,8 +393,17 @@ def render_all(player, mouse):
     libtcod.console_set_default_foreground(_panel, libtcod.light_gray)
     libtcod.console_print_ex(
         _panel, 1, 0, libtcod.BKGND_NONE, libtcod.LEFT,
-        _get_names_under_mouse(player, current_map.objects, current_map.fov_map, mouse))
+        _get_names_under_mouse(player, mouse))
 
     # Done with "_panel", blit it to the root console.
     libtcod.console_blit(_panel, 0, 0, config.SCREEN_WIDTH, config.PANEL_HEIGHT,
                          0, 0, PANEL_Y)
+
+
+def render_all(player, mouse):
+    global _con, _panel
+
+    update_camera(player)
+
+    draw_console(player)
+    draw_panel(player, mouse)
