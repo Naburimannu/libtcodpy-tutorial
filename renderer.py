@@ -97,20 +97,21 @@ def colored_text_list(lines, width):
         libtcod.console_flush()
         while True:
             ui.poll()
+            key_char = chr(ui.key.c)
             if (ui.mouse.wheel_up or ui.key.vk == libtcod.KEY_UP or
-                    ui.key.vk == libtcod.KEY_KP8):
+                    ui.key.vk == libtcod.KEY_KP8 or key_char == 'k'):
                 offset = offset - 1
                 break
             if (ui.mouse.wheel_down or ui.key.vk == libtcod.KEY_DOWN or
-                    ui.key.vk == libtcod.KEY_KP2):
+                    ui.key.vk == libtcod.KEY_KP2 or key_char == 'j'):
                 offset = offset + 1
                 break
             if (ui.key.vk == libtcod.KEY_PAGEUP or
-                    ui.key.vk == libtcod.KEY_KP9):
+                    ui.key.vk == libtcod.KEY_KP9 or key_char == 'K'):
                 offset = offset - height
                 break
             if (ui.key.vk == libtcod.KEY_PAGEDOWN or
-                    ui.key.vk == libtcod.KEY_KP3):
+                    ui.key.vk == libtcod.KEY_KP3 or key_char == 'J'):
                 offset = offset + height
                 break
             if (ui.key.vk == libtcod.KEY_ALT or
