@@ -16,6 +16,16 @@ MSG_X = config.BAR_WIDTH + 2
 LIMIT_FPS = 20
 
 
+_con = None
+""" main console window for drawing the map and objects """
+_overlay = None
+""" buffer overlaid over the main console window for effects,
+labels, and other metadata.
+"""
+_panel = None
+""" UI text data """
+
+
 class ScreenCoords(tuple):
     @staticmethod
     def fromWorldCoords(camera_coords, world_coords):
@@ -41,6 +51,7 @@ def renderer_init():
     libtcod.console_init_root(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, 'python/libtcod tutorial', False)
     libtcod.sys_set_fps(LIMIT_FPS)
     _con = libtcod.console_new(config.MAP_PANEL_WIDTH, config.MAP_PANEL_HEIGHT)
+    _overlay = libtcod.console_new(config.MAP_PANEL_WIDTH, config.MAP_PANEL_HEIGHT)
     _panel = libtcod.console_new(config.SCREEN_WIDTH, config.PANEL_HEIGHT)
 
 
