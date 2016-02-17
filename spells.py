@@ -20,40 +20,13 @@ FIREBALL_RADIUS = 3
 FIREBALL_DAMAGE = 25
 
 
-def _target_tile(actor, max_range=None):
-    """
-    Return the position of a tile left-clicked in player's FOV
-    (optionally in a range), or (None,None) if right-clicked.
-    """
-    while True:
-        # Render the screen. This erases the inventory and shows
-        # the names of objects under the mouse.
-        libtcod.console_flush()
-        ui.poll()
-        renderer.render_all(actor, ui.mouse)
-        actor.current_map.fov_needs_recompute = False
-
-        pos = renderer.ScreenCoords.toWorldCoords(actor.camera_position,
-                                                  (ui.mouse.cx, ui.mouse.cy))
-
-        if ui.mouse.rbutton_pressed or ui.key.vk == libtcod.KEY_ESCAPE:
-            return None
-
-        # Accept the target if the player clicked in FOV
-        # and within the range specified.
-        if (ui.mouse.lbutton_pressed and
-                libtcod.map_is_in_fov(actor.current_map.fov_map, pos.x, pos.y) and
-                (max_range is None or actor.distance(pos) <= max_range)):
-            return pos
-
-
 def _target_monster(actor, max_range=None):
     """
     Returns a clicked monster inside FOV up to a range,
     or None if right-clicked.
     """
     while True:
-        pos = _target_tile(actor, max_range)
+        pos = renderer.target_tile(actor, max_range)
         if pos is None:
             return None
 
@@ -110,7 +83,7 @@ def cast_lightning(actor):
 def cast_fireball(actor):
     log.message('Left-click a target tile for the fireball, '
                 'or right-click to cancel.', libtcod.light_cyan)
-    pos = _target_tile(actor)
+    pos = renderer.target_tile(actor)
     if pos is None:
         return 'cancelled'
     log.message('The fireball explodes, burning everything within ' +

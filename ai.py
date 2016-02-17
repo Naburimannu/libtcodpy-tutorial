@@ -36,11 +36,13 @@ class confused_monster_metadata:
         self.num_turns = num_turns
 
 
+def random_direction():
+    return algebra.directions[libtcod.random_get_int(0, 0, 7)]
+
+
 def confused_monster(monster, player, metadata):
     if metadata.num_turns > 0:
-        actions.move(monster,
-                     libtcod.random_get_int(0, -1, 1),
-                     libtcod.random_get_int(0, -1, 1))
+        actions.move(monster, random_direction())
         metadata.num_turns -= 1
     else:
         # Restore the previous AI (this one will be deleted because it's not referenced anymore)

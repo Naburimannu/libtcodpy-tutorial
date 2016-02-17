@@ -55,6 +55,33 @@ def renderer_init():
     _panel = libtcod.console_new(config.SCREEN_WIDTH, config.PANEL_HEIGHT)
 
 
+def target_tile(actor, max_range=None):
+    """
+    Return the position of a tile left-clicked in player's FOV
+    (optionally in a range), or (None,None) if right-clicked.
+    """
+    while True:
+        # Render the screen. This erases the inventory and shows
+        # the names of objects under the mouse.
+        libtcod.console_flush()
+        ui.poll()
+        render_all(actor, ui.mouse)
+        actor.current_map.fov_needs_recompute = False
+
+        pos = ScreenCoords.toWorldCoords(actor.camera_position,
+                                                  (ui.mouse.cx, ui.mouse.cy))
+
+        if ui.mouse.rbutton_pressed or ui.key.vk == libtcod.KEY_ESCAPE:
+            return None
+
+        # Accept the target if the player clicked in FOV
+        # and within the range specified.
+        if (ui.mouse.lbutton_pressed and
+                libtcod.map_is_in_fov(actor.current_map.fov_map, pos.x, pos.y) and
+                (max_range is None or actor.distance(pos) <= max_range)):
+            return pos
+
+
 def msgbox(text, width=50):
     """
     Display a message, wait for any keypress.
@@ -410,6 +437,12 @@ def draw_panel(player, mouse):
                          0, 0, PANEL_Y)
 
 
+def blit_overlay():
+    global _overlay
+    libtcod.console_blit(_overlay, 0, 0, config.MAP_PANEL_WIDTH,
+                         config.MAP_PANEL_HEIGHT, 0, 0, 0)
+
+
 def render_all(player, mouse):
     global _con, _panel
 
@@ -417,3 +450,5 @@ def render_all(player, mouse):
 
     draw_console(player)
     draw_panel(player, mouse)
+    blit_overlay()
+
