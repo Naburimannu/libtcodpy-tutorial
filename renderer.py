@@ -291,8 +291,6 @@ def update_camera(player):
     Makes sure the player is roughly centered and that we're not trying to draw off screen.
     Basic implementation is stateless.
     """
-    #newPos = player.pos - algebra.Location(config.MAP_PANEL_WIDTH / 2,
-    #                                       config.MAP_PANEL_HEIGHT / 2)
     newPos = player.pos - _console_center
 
     # Make sure the camera doesn't see outside the map.

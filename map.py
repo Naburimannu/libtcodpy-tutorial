@@ -11,8 +11,8 @@ class Room(algebra.Rect):
 class Terrain(object):
     def __init__(self, name, display_name, icon, seen_color, unseen_color, blocks, blocks_sight):
         self.name = name
-        self.display_name = display_name # text displayed on mouseover
-        self.icon = icon # character drawn on screen
+        self.display_name = display_name  # text displayed on mouseover
+        self.icon = icon  # character drawn on screen
         self.seen_color = seen_color
         self.unseen_color = unseen_color
         self.blocks = blocks

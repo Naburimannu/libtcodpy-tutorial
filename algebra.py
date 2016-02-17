@@ -66,9 +66,11 @@ class Location(object):
 
 
 class Direction(object):
-    def __init__(self, x, y):
+    def __init__(self, x, y, left = None, right = None):
         self.x = x
         self.y = y
+        self.left = left
+        self.right = right
 
     def __eq__(self, other):
         return (isinstance(other, self.__class__) and
@@ -95,3 +97,21 @@ northwest = Direction(-1, -1)
 northeast = Direction(1, -1)
 southwest = Direction(-1, 1)
 southeast = Direction(1, 1)
+
+north.left = northwest
+northwest.left = west
+west.left = southwest
+southwest.left = south
+south.left = southeast
+southeast.left = east
+east.left = northeast
+northeast.left = north
+
+north.right = northeast
+northeast.right = east
+east.right = southeast
+southeast.right = south
+south.right = southwest
+southwest.right = west
+west.right = northwest
+northwest.right = north

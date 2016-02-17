@@ -128,6 +128,28 @@ def try_stairs(player):
     return False
 
 
+def _running_lookahead(player):
+    """
+    Returns true if the upcoming terrain doesn't match the current terrain,
+    or if there's an object in the upcoming space.
+    If the player stops running when true, they should stop in the doorway to
+    a room, or just before rounding a bend in a corridor or entering an
+    intersection.
+    """
+    map = player.current_map
+    dir = player.run_direction
+    if (map.terrain_at(player.pos) != map.terrain_at(player.pos + dir) or
+            (map.terrain_at(player.pos + dir.left.left) != map.terrain_at(player.pos + dir.left)) or
+            (map.terrain_at(player.pos + dir.right.right) != map.terrain_at(player.pos + dir.right))):
+        return True
+    for o in map.objects:
+        if (o.pos == player.pos + dir or
+                o.pos == player.pos + dir.left or
+                o.pos == player.pos + dir.right):
+            return True
+    return False
+
+
 def handle_keys(player):
     """
     Returns 'playing', 'didnt-take-turn', or 'exit'.
@@ -146,8 +168,11 @@ def handle_keys(player):
         renderer.log_display()
 
     if player.game_state == 'running':
-        if player.endangered or not player_move_or_attack(player, player.run_direction, False):
+        if (player.endangered or 
+                _running_lookahead(player) or
+                not player_move_or_attack(player, player.run_direction, False)):
             player.game_state = 'playing'
+            return 'didnt-take-turn'
 
     if player.game_state == 'playing':
         # movement keys
