@@ -70,6 +70,17 @@ def target_tile(actor, max_range=None):
 
         pos = ScreenCoords.toWorldCoords(actor.camera_position,
                                                   (ui.mouse.cx, ui.mouse.cy))
+        libtcod.console_set_default_background(_overlay, libtcod.black)
+        # Clearing _overlay here breaks rendering, and I don't understand why.
+        (ux, uy) = ScreenCoords.fromWorldCoords(actor.camera_position,
+                                                actor.pos)
+        libtcod.line_init(ux, uy, ui.mouse.cx, ui.mouse.cy)
+        nx, ny = libtcod.line_step()
+        while ((not (nx is None)) and nx >= 0 and ny >= 0 and
+               nx < config.MAP_PANEL_WIDTH and
+               ny < config.MAP_PANEL_HEIGHT):
+            _set(_overlay, nx, ny, libtcod.sepia, libtcod.BKGND_SET)
+            nx, ny = libtcod.line_step()
 
         if ui.mouse.rbutton_pressed or ui.key.vk == libtcod.KEY_ESCAPE:
             return None
@@ -216,14 +227,24 @@ def _render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
 
 
 def _get_names_under_mouse(player, mouse):
+    if (mouse.cx < 0 or mouse.cy < 0 or
+            mouse.cx >= config.MAP_PANEL_WIDTH or
+            mouse.cy >= config.MAP_PANEL_HEIGHT):
+        return ''
+
     objects = player.current_map.objects
     fov_map = player.current_map.fov_map
     pos = ScreenCoords.toWorldCoords(player.camera_position,
                                      (mouse.cx, mouse.cy))
+    if (pos.x >= player.current_map.width or
+            pos.y >= player.current_map.height):
+        return ''
 
     names = [obj.name for obj in objects
              if obj.pos == pos and
              libtcod.map_is_in_fov(fov_map, obj.x, obj.y)]
+    # print('mouse ' + str(mouse.cx) + ', ' + str(mouse.cy) + ' = ' +
+    #       str(pos.x) + ', ' + str(pos.y))
     if player.current_map.terrain_at(pos).display_name:
         names.append(player.current_map.terrain_at(pos).display_name)
 
@@ -439,13 +460,12 @@ def draw_panel(player, mouse):
 
 def blit_overlay():
     global _overlay
+    libtcod.console_set_key_color(_overlay, libtcod.black)
     libtcod.console_blit(_overlay, 0, 0, config.MAP_PANEL_WIDTH,
-                         config.MAP_PANEL_HEIGHT, 0, 0, 0)
+                         config.MAP_PANEL_HEIGHT, 0, 0, 0, 0.4, 1.0)
 
 
 def render_all(player, mouse):
-    global _con, _panel
-
     update_camera(player)
 
     draw_console(player)

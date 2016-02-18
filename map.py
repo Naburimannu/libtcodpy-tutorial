@@ -63,6 +63,14 @@ class Map(object):
                     not terrain_types[self.terrain[x][y]].blocks)
 
     def terrain_at(self, pos):
+        """
+        Returns the Terrain at (pos), or terrain_types[0] if pos is outside
+        the bounds of the current map.
+        """
+        if (pos.x < 0 or pos.y < 0 or
+                pos.x > self.width or
+                pos.y >= self.height):
+            return terrain_types[0]
         return terrain_types[self.terrain[pos.x][pos.y]]
 
     def is_blocked_at(self, pos):
