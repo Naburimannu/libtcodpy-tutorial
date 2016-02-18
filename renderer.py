@@ -69,7 +69,7 @@ def target_tile(actor, max_range=None):
         actor.current_map.fov_needs_recompute = False
 
         pos = ScreenCoords.toWorldCoords(actor.camera_position,
-                                                  (ui.mouse.cx, ui.mouse.cy))
+                                         (ui.mouse.cx, ui.mouse.cy))
         libtcod.console_set_default_background(_overlay, libtcod.black)
         # Clearing _overlay here breaks rendering, and I don't understand why.
         (ux, uy) = ScreenCoords.fromWorldCoords(actor.camera_position,
@@ -471,4 +471,3 @@ def render_all(player, mouse):
     draw_console(player)
     draw_panel(player, mouse)
     blit_overlay()
-

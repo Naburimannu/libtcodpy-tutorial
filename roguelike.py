@@ -168,7 +168,7 @@ def handle_keys(player):
         renderer.log_display()
 
     if player.game_state == 'running':
-        if (player.endangered or 
+        if (player.endangered or
                 key.vk != libtcod.KEY_NONE or
                 _running_lookahead(player) or
                 not player_move_or_attack(player, player.run_direction, False)):

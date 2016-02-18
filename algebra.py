@@ -66,7 +66,7 @@ class Location(object):
 
 
 class Direction(object):
-    def __init__(self, x, y, left = None, right = None):
+    def __init__(self, x, y, left=None, right=None):
         self.x = x
         self.y = y
         self.left = left
@@ -116,4 +116,4 @@ southwest.right = west
 west.right = northwest
 northwest.right = north
 
-directions = [ north, northeast, east, southeast, south, southwest, west, northwest ]
+directions = [north, northeast, east, southeast, south, southwest, west, northwest]
