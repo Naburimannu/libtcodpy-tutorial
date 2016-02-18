@@ -55,11 +55,51 @@ def renderer_init():
     _panel = libtcod.console_new(config.SCREEN_WIDTH, config.PANEL_HEIGHT)
 
 
+def parse_move(key):
+    key_char = chr(key.c)
+    if (key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8 or
+            key_char == 'k' or key_char == 'K'):
+        return (True, algebra.north)
+    elif (key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2 or
+            key_char == 'j' or key_char == 'J'):
+        return (True, algebra.south)
+    elif (key.vk == libtcod.KEY_LEFT or key.vk == libtcod.KEY_KP4 or
+            key_char == 'h' or key_char == 'H'):
+        return (True, algebra.west)
+    elif (key.vk == libtcod.KEY_RIGHT or key.vk == libtcod.KEY_KP6 or
+            key_char == 'l' or key_char == 'L'):
+        return (True, algebra.east)
+    elif (key.vk == libtcod.KEY_HOME or key.vk == libtcod.KEY_KP7 or
+            key_char == 'y' or key_char == 'Y'):
+        return (True, algebra.northwest)
+    elif (key.vk == libtcod.KEY_PAGEUP or key.vk == libtcod.KEY_KP9 or
+            key_char == 'u' or key_char == 'U'):
+        return (True, algebra.northeast)
+    elif (key.vk == libtcod.KEY_END or key.vk == libtcod.KEY_KP1 or
+            key_char == 'b' or key_char == 'B'):
+        return (True, algebra.southwest)
+    elif (key.vk == libtcod.KEY_PAGEDOWN or key.vk == libtcod.KEY_KP3 or
+            key_char == 'n' or key_char == 'N'):
+        return (True, algebra.southeast)
+    elif (key.vk == libtcod.KEY_KP5 or key_char == '.'):
+        # do nothing but note that a relevant key was pressed
+        return (True, None)
+    return (False, None)
+
+
 def target_tile(actor, max_range=None):
     """
     Return the position of a tile left-clicked in player's FOV
     (optionally in a range), or (None,None) if right-clicked.
     """
+    ui.poll()
+    (ox, oy) = (ui.mouse.cx, ui.mouse.cy)
+    using_mouse = False
+    using_keyboard = False
+    (kx, ky) = ScreenCoords.fromWorldCoords(actor.camera_position,
+                                            actor.pos)
+    pos = None
+
     while True:
         # Render the screen. This erases the inventory and shows
         # the names of objects under the mouse.
@@ -67,14 +107,27 @@ def target_tile(actor, max_range=None):
         ui.poll()
         render_all(actor, ui.mouse)
         actor.current_map.fov_needs_recompute = False
+        if (ui.mouse.cx != ox or ui.mouse.cy != oy):
+            using_mouse = True
+            using_keyboard = False
+        (key_pressed, direction) = parse_move(ui.key)
+        if key_pressed:
+            using_keyboard = True
+            using_mouse = False
+            if direction:
+                kx += direction.x
+                ky += direction.y
 
+        if using_mouse:
+            (kx, ky) = (ui.mouse.cx, ui.mouse.cy)
         pos = ScreenCoords.toWorldCoords(actor.camera_position,
-                                         (ui.mouse.cx, ui.mouse.cy))
+                                            (kx, ky))
         libtcod.console_set_default_background(_overlay, libtcod.black)
         # Clearing _overlay here breaks rendering, and I don't understand why.
         (ux, uy) = ScreenCoords.fromWorldCoords(actor.camera_position,
                                                 actor.pos)
-        libtcod.line_init(ux, uy, ui.mouse.cx, ui.mouse.cy)
+        libtcod.line_init(ux, uy, kx, ky)
+
         nx, ny = libtcod.line_step()
         while ((not (nx is None)) and nx >= 0 and ny >= 0 and
                nx < config.MAP_PANEL_WIDTH and
@@ -87,7 +140,7 @@ def target_tile(actor, max_range=None):
 
         # Accept the target if the player clicked in FOV
         # and within the range specified.
-        if (ui.mouse.lbutton_pressed and
+        if ((ui.mouse.lbutton_pressed or ui.key.vk == libtcod.KEY_ENTER) and
                 libtcod.map_is_in_fov(actor.current_map.fov_map, pos.x, pos.y) and
                 (max_range is None or actor.distance(pos) <= max_range)):
             return pos
