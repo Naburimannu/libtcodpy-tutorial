@@ -56,35 +56,41 @@ def renderer_init():
 
 
 def parse_move(key):
+    """
+    Returns (bool, direction, bool).
+    First value is True if a direction key was pressed, False otherwise.
+    Direction will be None if first value is False or the '.' or numpad 5 were pressed.
+    Last value is True if shift was held (run / page-scroll), False otherwise.
+    """
     key_char = chr(key.c)
     if (key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8 or
             key_char == 'k' or key_char == 'K'):
-        return (True, algebra.north)
+        return (True, algebra.north, key.shift)
     elif (key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2 or
             key_char == 'j' or key_char == 'J'):
-        return (True, algebra.south)
+        return (True, algebra.south, key.shift)
     elif (key.vk == libtcod.KEY_LEFT or key.vk == libtcod.KEY_KP4 or
             key_char == 'h' or key_char == 'H'):
-        return (True, algebra.west)
+        return (True, algebra.west, key.shift)
     elif (key.vk == libtcod.KEY_RIGHT or key.vk == libtcod.KEY_KP6 or
             key_char == 'l' or key_char == 'L'):
-        return (True, algebra.east)
+        return (True, algebra.east, key.shift)
     elif (key.vk == libtcod.KEY_HOME or key.vk == libtcod.KEY_KP7 or
             key_char == 'y' or key_char == 'Y'):
-        return (True, algebra.northwest)
+        return (True, algebra.northwest, key.shift)
     elif (key.vk == libtcod.KEY_PAGEUP or key.vk == libtcod.KEY_KP9 or
             key_char == 'u' or key_char == 'U'):
-        return (True, algebra.northeast)
+        return (True, algebra.northeast, key.shift)
     elif (key.vk == libtcod.KEY_END or key.vk == libtcod.KEY_KP1 or
             key_char == 'b' or key_char == 'B'):
-        return (True, algebra.southwest)
+        return (True, algebra.southwest, key.shift)
     elif (key.vk == libtcod.KEY_PAGEDOWN or key.vk == libtcod.KEY_KP3 or
             key_char == 'n' or key_char == 'N'):
-        return (True, algebra.southeast)
+        return (True, algebra.southeast, key.shift)
     elif (key.vk == libtcod.KEY_KP5 or key_char == '.'):
         # do nothing but note that a relevant key was pressed
-        return (True, None)
-    return (False, None)
+        return (True, None, False)
+    return (False, None, False)
 
 
 def target_tile(actor, max_range=None):
@@ -110,7 +116,7 @@ def target_tile(actor, max_range=None):
         if (ui.mouse.cx != ox or ui.mouse.cy != oy):
             using_mouse = True
             using_keyboard = False
-        (key_pressed, direction) = parse_move(ui.key)
+        (key_pressed, direction, shift) = parse_move(ui.key)
         if key_pressed:
             using_keyboard = True
             using_mouse = False
@@ -199,27 +205,26 @@ def colored_text_list(lines, width):
         libtcod.console_flush()
         while True:
             ui.poll()
-            key_char = chr(ui.key.c)
-            if (ui.mouse.wheel_up or ui.key.vk == libtcod.KEY_UP or
-                    ui.key.vk == libtcod.KEY_KP8 or key_char == 'k'):
-                offset = offset - 1
-                break
-            if (ui.mouse.wheel_down or ui.key.vk == libtcod.KEY_DOWN or
-                    ui.key.vk == libtcod.KEY_KP2 or key_char == 'j'):
-                offset = offset + 1
-                break
-            if (ui.key.vk == libtcod.KEY_PAGEUP or
-                    ui.key.vk == libtcod.KEY_KP9 or key_char == 'K'):
-                offset = offset - height
-                break
-            if (ui.key.vk == libtcod.KEY_PAGEDOWN or
-                    ui.key.vk == libtcod.KEY_KP3 or key_char == 'J'):
-                offset = offset + height
-                break
-            if (ui.key.vk == libtcod.KEY_ALT or
-                    ui.key.vk == libtcod.KEY_CONTROL or
-                    ui.key.vk == libtcod.KEY_SHIFT or
-                    ui.key.vk == libtcod.KEY_NONE):
+            (key_pressed, direction, shift) = parse_move(ui.key)
+            if key_pressed:
+                if direction == algebra.north and not shift:
+                    offset -= 1
+                    break
+                elif direction == algebra.south and not shift:
+                    offset += 1
+                    break
+                elif (direction == algebra.northeast or
+                        (direction == algebra.north and shift)):
+                    offset -= height
+                    break
+                elif (direction == algebra.southeast or
+                        (direction == algebra.south and shift)):
+                    offset += height
+                    break
+            elif (ui.key.vk == libtcod.KEY_ALT or
+                  ui.key.vk == libtcod.KEY_CONTROL or
+                  ui.key.vk == libtcod.KEY_SHIFT or
+                  ui.key.vk == libtcod.KEY_NONE):
                 break
             return
 
