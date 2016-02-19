@@ -137,7 +137,7 @@ def target_tile(actor, max_range=None):
         pos = ScreenCoords.toWorldCoords(actor.camera_position,
                                             (kx, ky))
         libtcod.console_set_default_background(_overlay, libtcod.black)
-        # Clearing _overlay here breaks rendering, and I don't understand why.
+        libtcod.console_clear(_overlay)
         (ux, uy) = ScreenCoords.fromWorldCoords(actor.camera_position,
                                                 actor.pos)
         libtcod.line_init(ux, uy, kx, ky)
@@ -150,6 +150,7 @@ def target_tile(actor, max_range=None):
             nx, ny = libtcod.line_step()
 
         if ui.mouse.rbutton_pressed or ui.key.vk == libtcod.KEY_ESCAPE:
+            libtcod.console_clear(_overlay)
             return None
 
         # Accept the target if the player clicked in FOV
@@ -157,6 +158,7 @@ def target_tile(actor, max_range=None):
         if ((ui.mouse.lbutton_pressed or ui.key.vk == libtcod.KEY_ENTER) and
                 libtcod.map_is_in_fov(actor.current_map.fov_map, pos.x, pos.y) and
                 (max_range is None or actor.distance(pos) <= max_range)):
+            libtcod.console_clear(_overlay)
             return pos
 
 
