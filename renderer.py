@@ -1,4 +1,5 @@
 import libtcodpy as libtcod
+import time
 
 import config
 import log
@@ -14,6 +15,10 @@ PANEL_Y = config.SCREEN_HEIGHT - config.PANEL_HEIGHT
 MSG_X = config.BAR_WIDTH + 2
 
 LIMIT_FPS = 20
+
+_frame_index = 0
+_twenty_frame_estimate = 1000
+_last_frame_time = None
 
 
 _con = None
@@ -46,13 +51,14 @@ def renderer_init():
     """
     Initialize libtcod and set up our basic consoles to draw into.
     """
-    global _con, _panel
+    global _con, _panel, _overlay, _last_frame_time
     libtcod.console_set_custom_font('arial12x12.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
     libtcod.console_init_root(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, 'python/libtcod tutorial', False)
     libtcod.sys_set_fps(LIMIT_FPS)
     _con = libtcod.console_new(config.MAP_PANEL_WIDTH, config.MAP_PANEL_HEIGHT)
     _overlay = libtcod.console_new(config.MAP_PANEL_WIDTH, config.MAP_PANEL_HEIGHT)
     _panel = libtcod.console_new(config.SCREEN_WIDTH, config.PANEL_HEIGHT)
+    _last_frame_time = time.time() * 1000
 
 
 def parse_move(key):
@@ -454,6 +460,11 @@ def _debug_danger(player):
             libtcod.LEFT, 'DANGER')
 
 
+def _debug_fps():
+    global _panel, _twenty_frame_estimate
+    libtcod.console_print_ex(_panel, 1, 2, libtcod.BKGND_NONE, libtcod.LEFT, 'FPS ' + str(20000. / _twenty_frame_estimate))
+
+
 def draw_console(player):
     """
     Refreshes the map display and blits to the window.
@@ -505,6 +516,7 @@ def draw_panel(player, mouse):
     # _debug_positions(player, mouse)
     # _debug_room(player)
     # _debug_danger(player)
+    _debug_fps()
 
     libtcod.console_set_default_foreground(_panel, libtcod.light_gray)
     libtcod.console_print_ex(
@@ -524,7 +536,14 @@ def blit_overlay():
 
 
 def render_all(player, mouse):
+    global _frame_index, _twenty_frame_estimate, _last_frame_time
     update_camera(player)
+    _frame_index = (_frame_index + 1) % 20
+    if _frame_index == 0:
+        now = time.time() * 1000
+        _twenty_frame_estimate = (now - _last_frame_time) / 2 + (_twenty_frame_estimate / 2)
+        _last_frame_time = now
+
 
     draw_console(player)
     draw_panel(player, mouse)
