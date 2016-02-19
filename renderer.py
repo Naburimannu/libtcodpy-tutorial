@@ -395,10 +395,10 @@ def _set(con, x, y, color, mode):
 def _draw_fov_using_terrain(player):
     libtcod.console_clear(_con)
     current_map = player.current_map
+    pos = algebra.Location(0, 0)
     for screen_y in range(min(current_map.height, config.MAP_PANEL_HEIGHT)):
+        pos.set(player.camera_position.x, player.camera_position.y + screen_y)
         for screen_x in range(min(current_map.width, config.MAP_PANEL_WIDTH)):
-            pos = ScreenCoords.toWorldCoords(player.camera_position,
-                                             (screen_x, screen_y))
             visible = libtcod.map_is_in_fov(current_map.fov_map, pos.x, pos.y)
             terrain = current_map.terrain_at(pos)
             if not visible:
@@ -407,6 +407,7 @@ def _draw_fov_using_terrain(player):
             else:
                 _set(_con, screen_x, screen_y, terrain.seen_color, libtcod.BKGND_SET)
                 current_map.explore(pos)
+            pos.x += 1
 
 
 _console_center = algebra.Location(config.MAP_PANEL_WIDTH / 2,

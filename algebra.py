@@ -51,6 +51,10 @@ class Location(object):
     def __sub__(self, other):
         return Location(self.x - other.x, self.y - other.y)
 
+    def set(self, x, y):
+        self.x = x
+        self.y = y
+
     def bound(self, rect):
         if (self.x > rect.x2):
             self.x = rect.x2
