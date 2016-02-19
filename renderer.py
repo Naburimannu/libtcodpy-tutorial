@@ -125,6 +125,8 @@ def target_tile(actor, max_range=None):
         (key_pressed, direction, shift) = parse_move(ui.key)
         if key_pressed:
             using_keyboard = True
+            if using_mouse:
+                (ox, oy) = (ui.mouse.cx, ui.mouse.cy)
             using_mouse = False
             if direction:
                 kx += direction.x
