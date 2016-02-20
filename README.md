@@ -26,4 +26,9 @@ At the git tag 'basic-refactoring', the only other significant change should be:
 Subsequently implemented externally-visible features include:
 * Persistent maps, and up-stairs allowing backtracking.
 * Support for maps smaller or larger than the screen.
-* ^p opens old log, which can be scrolled through with numpad or mousewheel. 
+* ^p opens old log, which can be scrolled through with numpad, vi keys, or mousewheel. 
+* Move with vi keys (hjkl,yubn) as well as numpad.
+* Running with shift-move until reaching an object, a change in architecture, or spotting a monster.
+* Targeting with keyboard as well as mouse.
+* Help screen on ? or F1.
+* ~2x speedup drawing large maps (from 6-7 fps to 10-13 fps for 200x200).
