@@ -115,6 +115,18 @@ def display_character_info(player):
                     CHARACTER_SCREEN_WIDTH)
 
 
+def display_help():
+    renderer.msgbox('numpad keys to move, or:\n' +
+                    '  h (west) j (south) k (north) l (east)\n' +
+                    '  y (nw) u (ne) b (sw) n (se) . (wait)\n' +
+                    '  shift-move to run\n' +
+                    'g/get, d/drop, c/character information\n' +
+                    'i/inventory, equip, or use item\n' +
+                    '</traverse stairs\n' +
+                    'control-p/scroll through old log messages\n',
+                    INVENTORY_WIDTH)
+
+
 def try_stairs(player):
     for f in player.current_map.portals:
         if f.pos == player.pos:
@@ -216,6 +228,8 @@ def handle_keys(player):
                 display_character_info(player)
             if key_char == '<':
                 try_stairs(player)
+            if (key_char == '?' or key.vk == libtcod.KEY_F1):
+                display_help()
 
             return 'didnt-take-turn'
 
