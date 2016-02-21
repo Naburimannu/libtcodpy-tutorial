@@ -37,18 +37,19 @@ def move_towards(o, target_pos):
     return move(o, dir)
 
 
-def attack(fighter, target):
+def attack(fighter, target, report=True):
     """
     A simple formula for attack damage.
     """
     damage = fighter.power - target.fighter.defense
 
     if damage > 0:
-        log.message(
-            fighter.owner.name.capitalize() + ' attacks ' + target.name +
-            ' for ' + str(damage) + ' hit points.')
+        if report:
+            log.message(
+                fighter.owner.name.capitalize() + ' attacks ' + target.name +
+                ' for ' + str(damage) + ' hit points.')
         inflict_damage(fighter.owner, target.fighter, damage)
-    else:
+    elif report:
         log.message(
             fighter.owner.name.capitalize() + ' attacks ' + target.name +
             ' but it has no effect!')
@@ -119,7 +120,7 @@ def drop(actor, o, report=True):
         must_split = True
     else:
         if o.equipment:
-            dequip(actor, o.equipment)
+            dequip(actor, o.equipment, True)
         actor.inventory.remove(o)
 
     combined = False;
@@ -182,7 +183,7 @@ def equip(actor, eqp, report=True):
         log.message('Equipped ' + eqp.owner.name + ' on ' + eqp.slot + '.', libtcod.light_green)
 
 
-def dequip(actor, eqp, report):
+def dequip(actor, eqp, report=True):
     """
     Dequip the object (and log).
     """
