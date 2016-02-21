@@ -329,6 +329,7 @@ def new_game():
     renderer.update_camera(player)
 
     log.message('Welcome stranger! Prepare to perish in the Tombs of the Ancient Kings.', libtcod.red)
+    log.message('Press ? or F1 for help.')
 
     return player
 
