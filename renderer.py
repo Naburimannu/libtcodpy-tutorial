@@ -295,6 +295,13 @@ def _render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
         name + ': ' + str(value) + '/' + str(maximum))
 
 
+def _describe_obj(obj):
+    if obj.item and obj.item.count > 1:
+        return obj.name + ' (x' + str(obj.item.count) + ')'
+    else:
+        return obj.name
+
+
 def _get_names_under_mouse(player, mouse):
     if (mouse.cx < 0 or mouse.cy < 0 or
             mouse.cx >= config.MAP_PANEL_WIDTH or
@@ -309,7 +316,7 @@ def _get_names_under_mouse(player, mouse):
             pos.y >= player.current_map.height):
         return ''
 
-    names = [obj.name for obj in objects
+    names = [_describe_obj(obj) for obj in objects
              if obj.pos == pos and
              libtcod.map_is_in_fov(fov_map, obj.x, obj.y)]
     # print('mouse ' + str(mouse.cx) + ', ' + str(mouse.cy) + ' = ' +

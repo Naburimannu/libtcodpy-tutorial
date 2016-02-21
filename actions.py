@@ -8,6 +8,7 @@ Magical effects and targeting (spells.py) could also live here.
 Conditionals and interfaces for the player sit up top in roguelike.py.
 """
 import libtcodpy as libtcod
+import copy
 
 import log
 import algebra
@@ -112,13 +113,30 @@ def drop(actor, o, report=True):
     at the player's coordinates.
     If it's equipment, dequip before dropping.
     """
-    if o.equipment:
-        dequip(actor, o.equipment)
+    must_split = False
+    if o.item.count > 1:
+        o.item.count -= 1
+        must_split = True
+    else:
+        if o.equipment:
+            dequip(actor, o.equipment)
+        actor.inventory.remove(o)
 
-    actor.current_map.objects.append(o)
-    actor.inventory.remove(o)
-    o.x = actor.x
-    o.y = actor.y
+    combined = False;
+    for p in actor.current_map.objects:
+        if p.pos == actor.pos and o.item.can_combine(p):
+            p.item.count += 1
+            combined = True
+            break
+
+    if not combined:
+        new_o = o
+        if must_split:
+            new_o = copy.deepcopy(o)
+        new_o.item.count = 1
+        new_o.pos = actor.pos
+        actor.current_map.objects.append(new_o)
+
     if report:
         log.message(actor.name.capitalize() + ' dropped a ' + o.name + '.', libtcod.yellow)
 
@@ -157,7 +175,7 @@ def equip(actor, eqp, report=True):
     """
     old_equipment = _get_equipped_in_slot(actor, eqp.slot)
     if old_equipment is not None:
-        dequip(actor, old_equipment)
+        dequip(actor, old_equipment, report)
 
     eqp.is_equipped = True
     if report:
