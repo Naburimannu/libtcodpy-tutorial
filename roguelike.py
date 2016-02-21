@@ -386,7 +386,8 @@ def play_game(player):
 
     while not libtcod.console_is_window_closed():
         ui.poll()
-        renderer.render_all(player, ui.mouse)
+        renderer.render_all(player, (ui.mouse.cx,
+                                     ui.mouse.cy))
         player.current_map.fov_needs_recompute = False
 
         libtcod.console_flush()

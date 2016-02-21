@@ -118,7 +118,7 @@ def target_tile(actor, max_range=None):
         # the names of objects under the mouse.
         libtcod.console_flush()
         ui.poll()
-        render_all(actor, ui.mouse)
+        render_all(actor, (kx, ky))
         actor.current_map.fov_needs_recompute = False
         if (ui.mouse.cx != ox or ui.mouse.cy != oy):
             using_mouse = True
@@ -302,16 +302,16 @@ def _describe_obj(obj):
         return obj.name
 
 
-def _get_names_under_mouse(player, mouse):
-    if (mouse.cx < 0 or mouse.cy < 0 or
-            mouse.cx >= config.MAP_PANEL_WIDTH or
-            mouse.cy >= config.MAP_PANEL_HEIGHT):
+def _get_names_under_mouse(player, (sx, sy)):
+    if (sx < 0 or sy < 0 or
+            sx >= config.MAP_PANEL_WIDTH or
+            sy >= config.MAP_PANEL_HEIGHT):
         return ''
 
     objects = player.current_map.objects
     fov_map = player.current_map.fov_map
     pos = ScreenCoords.toWorldCoords(player.camera_position,
-                                     (mouse.cx, mouse.cy))
+                                     (sx, sy))
     if (pos.x >= player.current_map.width or
             pos.y >= player.current_map.height):
         return ''
@@ -319,7 +319,7 @@ def _get_names_under_mouse(player, mouse):
     names = [_describe_obj(obj) for obj in objects
              if obj.pos == pos and
              libtcod.map_is_in_fov(fov_map, obj.x, obj.y)]
-    # print('mouse ' + str(mouse.cx) + ', ' + str(mouse.cy) + ' = ' +
+    # print('mouse ' + str(sx) + ', ' + str(sy) + ' = ' +
     #       str(pos.x) + ', ' + str(pos.y))
     if player.current_map.terrain_at(pos).display_name:
         names.append(player.current_map.terrain_at(pos).display_name)
@@ -516,7 +516,7 @@ def draw_console(player):
                          config.MAP_PANEL_HEIGHT, 0, 0, 0)
 
 
-def draw_panel(player, mouse):
+def draw_panel(player, pointer_location):
     """
     Refreshes the UI display and blits it to the window.
     """
@@ -540,7 +540,7 @@ def draw_panel(player, mouse):
     libtcod.console_set_default_foreground(_panel, libtcod.light_gray)
     libtcod.console_print_ex(
         _panel, 1, 0, libtcod.BKGND_NONE, libtcod.LEFT,
-        _get_names_under_mouse(player, mouse))
+        _get_names_under_mouse(player, pointer_location))
 
     # Done with "_panel", blit it to the root console.
     libtcod.console_blit(_panel, 0, 0, config.SCREEN_WIDTH, config.PANEL_HEIGHT,
@@ -554,7 +554,7 @@ def blit_overlay():
                          config.MAP_PANEL_HEIGHT, 0, 0, 0, 0.4, 1.0)
 
 
-def render_all(player, mouse):
+def render_all(player, pointer_location):
     global _frame_index, _twenty_frame_estimate, _last_frame_time
     update_camera(player)
     _frame_index = (_frame_index + 1) % 20
@@ -565,5 +565,5 @@ def render_all(player, mouse):
 
 
     draw_console(player)
-    draw_panel(player, mouse)
+    draw_panel(player, pointer_location)
     blit_overlay()
