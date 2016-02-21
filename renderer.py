@@ -135,8 +135,7 @@ def target_tile(actor, max_range=None):
 
         if using_mouse:
             (kx, ky) = (ui.mouse.cx, ui.mouse.cy)
-        pos = ScreenCoords.toWorldCoords(actor.camera_position,
-                                            (kx, ky))
+        pos = ScreenCoords.toWorldCoords(actor.camera_position, (kx, ky))
         libtcod.console_set_default_background(_overlay, libtcod.black)
         libtcod.console_clear(_overlay)
         (ux, uy) = ScreenCoords.fromWorldCoords(actor.camera_position,
@@ -481,7 +480,8 @@ def _debug_danger(player):
 
 def _debug_fps():
     global _panel, _twenty_frame_estimate
-    libtcod.console_print_ex(_panel, 1, 2, libtcod.BKGND_NONE, libtcod.LEFT, 'FPS ' + str(20000. / _twenty_frame_estimate))
+    libtcod.console_print_ex(_panel, 1, 2, libtcod.BKGND_NONE, libtcod.LEFT,
+                             'FPS ' + str(20000. / _twenty_frame_estimate))
 
 
 def draw_console(player):
@@ -562,7 +562,6 @@ def render_all(player, pointer_location):
         now = time.time() * 1000
         _twenty_frame_estimate = (now - _last_frame_time) / 2 + (_twenty_frame_estimate / 2)
         _last_frame_time = now
-
 
     draw_console(player)
     draw_panel(player, pointer_location)

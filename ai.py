@@ -23,7 +23,8 @@ def basic_monster(monster, player, metadata):
     """
     A basic monster takes its turn. if you can see it, it can see you.
     """
-    if libtcod.map_is_in_fov(monster.current_map.fov_map, monster.x, monster.y):
+    if libtcod.map_is_in_fov(monster.current_map.fov_map,
+                             monster.x, monster.y):
         if monster.distance_to(metadata.target) >= 2:
             actions.move_towards(monster, metadata.target.pos)
         elif metadata.target.fighter.hp > 0:
@@ -45,9 +46,11 @@ def confused_monster(monster, player, metadata):
         actions.move(monster, random_direction())
         metadata.num_turns -= 1
     else:
-        # Restore the previous AI (this one will be deleted because it's not referenced anymore)
+        # Restore the previous AI (this one will be deleted
+        # because it's not referenced anymore)
         monster.ai = metadata.old_ai
-        log.message(monster.name.capitalize() + ' is no longer confused!', libtcod.red)
+        log.message(monster.name.capitalize() +
+                    ' is no longer confused!', libtcod.red)
 
 
 def monster_death(monster):

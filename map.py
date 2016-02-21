@@ -9,7 +9,8 @@ class Room(algebra.Rect):
 
 
 class Terrain(object):
-    def __init__(self, name, display_name, icon, seen_color, unseen_color, blocks, blocks_sight):
+    def __init__(self, name, display_name, icon,
+                 seen_color, unseen_color, blocks, blocks_sight):
         self.name = name
         self.display_name = display_name  # text displayed on mouseover
         self.icon = icon  # character drawn on screen
@@ -19,8 +20,10 @@ class Terrain(object):
         self.blocks_sight = blocks_sight
 
 terrain_types = [
-        Terrain('wall', None, None, libtcod.Color(130, 110, 50), libtcod.Color(0, 0, 100), True, True),
-        Terrain('ground', None, None, libtcod.Color(200, 180, 50), libtcod.Color(50, 50, 150), False, False)
+        Terrain('wall', None, None, libtcod.Color(130, 110, 50),
+                libtcod.Color(0, 0, 100), True, True),
+        Terrain('ground', None, None, libtcod.Color(200, 180, 50),
+                libtcod.Color(50, 50, 150), False, False)
             ]
 
 

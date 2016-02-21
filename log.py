@@ -47,7 +47,8 @@ def message(new_msg, color=libtcod.white):
     new_msg_lines = textwrap.wrap(new_msg, MSG_WIDTH-5)
 
     for line in new_msg_lines:
-        # If the buffer is full, remove the first line to make room for the new one.
+        # If the buffer is full, remove the first line
+        # to make room for the new one.
         if len(game_msgs) == MSG_LIMIT:
             del game_msgs[0]
         new_message = ExplicitMessage(line, color, 1)

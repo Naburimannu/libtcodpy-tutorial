@@ -1,5 +1,6 @@
 """
-Simple entity system: any renderable Object can have a number of Components attached.
+Simple entity system: any renderable Object can have
+a number of Components attached.
 """
 import math
 import algebra
@@ -10,7 +11,8 @@ class Object:
     This is a generic object: the player, a monster, an item, the stairs...
     It's always represented by a character on screen.
     """
-    def __init__(self, pos, char, name, color, blocks=False, always_visible=False,
+    def __init__(self, pos, char, name, color,
+                 blocks=False, always_visible=False,
                  fighter=None, ai=None, item=None, equipment=None):
         self.pos = pos
         self.char = char
@@ -83,17 +85,20 @@ class Fighter(Component):
 
     @property
     def power(self):
-        bonus = sum(equipment.power_bonus for equipment in _get_all_equipped(self.owner))
+        bonus = sum(equipment.power_bonus for equipment
+                    in _get_all_equipped(self.owner))
         return self.base_power + bonus
 
     @property
     def defense(self):
-        bonus = sum(equipment.defense_bonus for equipment in _get_all_equipped(self.owner))
+        bonus = sum(equipment.defense_bonus for equipment
+                    in _get_all_equipped(self.owner))
         return self.base_defense + bonus
 
     @property
     def max_hp(self):
-        bonus = sum(equipment.max_hp_bonus for equipment in _get_all_equipped(self.owner))
+        bonus = sum(equipment.max_hp_bonus for equipment
+                    in _get_all_equipped(self.owner))
         return self.base_max_hp + bonus
 
 
@@ -129,9 +134,11 @@ class Equipment(Component):
     def set_owner(self, entity):
         Component.set_owner(self, entity)
 
-        # There must be an Item component for the Equipment component to work properly.
-        entity.item = Item()
-        entity.item.set_owner(entity)
+        # There must be an Item component for the Equipment
+        # component to work properly.
+        if entity.item is None:
+            entity.item = Item()
+            entity.item.set_owner(entity)
 
 
 class AI(Component):

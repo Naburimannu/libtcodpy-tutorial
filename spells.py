@@ -31,7 +31,8 @@ def _target_monster(actor, max_range=None):
             return None
 
         for obj in actor.current_map.objects:
-            if obj.x == pos.x and obj.y == pos.y and obj.fighter and obj != actor:
+            if (obj.x == pos.x and obj.y == pos.y and obj.fighter and
+                    obj != actor):
                 return obj
 
 

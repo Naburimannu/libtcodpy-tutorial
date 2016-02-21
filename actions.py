@@ -124,7 +124,7 @@ def drop(actor, o, report=True):
             dequip(actor, o.equipment, True)
         actor.inventory.remove(o)
 
-    combined = False;
+    combined = False
     for p in actor.current_map.objects:
         if p.pos == actor.pos and o.item.can_combine(p):
             p.item.count += 1
@@ -253,7 +253,7 @@ def _test_attack():
     df.base_defense = 15
     attack(af, d, False)
     assert df.hp == 85
-    
+
 
 def _test_actions():
     _test_move()

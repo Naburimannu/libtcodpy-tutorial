@@ -122,4 +122,5 @@ southwest.right = west
 west.right = northwest
 northwest.right = north
 
-directions = [north, northeast, east, southeast, south, southwest, west, northwest]
+directions = [north, northeast, east, southeast,
+              south, southwest, west, northwest]
