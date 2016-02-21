@@ -87,10 +87,12 @@ class Direction(object):
         """
         Normalize to length 1 (preserving direction), then round and
         convert to integer so the movement is restricted to the map grid.
+        If length is 0, remains 0.
         """
         distance = math.sqrt(self.x ** 2 + self.y ** 2)
-        self.x = int(round(self.x / distance))
-        self.y = int(round(self.y / distance))
+        if distance > 0:
+            self.x = int(round(self.x / distance))
+            self.y = int(round(self.y / distance))
 
 
 north = Direction(0, -1)

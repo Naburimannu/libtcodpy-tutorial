@@ -11,6 +11,7 @@ import libtcodpy as libtcod
 
 import log
 import algebra
+from components import *
 
 
 def move(o, direction):
@@ -76,17 +77,19 @@ def heal(fighter, amount):
         fighter.hp = fighter.max_hp
 
 
-def pick_up(actor, o):
+def pick_up(actor, o, report=True):
     """
     Add an Object to the actor's inventory and remove from the map.
     """
     if len(actor.inventory) >= 26:
-        log.message(actor.name.capitalize() + ' inventory is full, cannot pick up ' +
-                    o.name + '.', libtcod.red)
+        if report:
+            log.message(actor.name.capitalize() + ' inventory is full, cannot pick up ' +
+                        o.name + '.', libtcod.red)
     else:
         actor.inventory.append(o)
         actor.current_map.objects.remove(o)
-        log.message(actor.name.capitalize() + ' picked up a ' + o.name + '!', libtcod.green)
+        if report:
+            log.message(actor.name.capitalize() + ' picked up a ' + o.name + '!', libtcod.green)
 
         # Special case: automatically equip if the corresponding equipment slot is unused.
         equipment = o.equipment
@@ -94,7 +97,7 @@ def pick_up(actor, o):
             equip(actor, equipment)
 
 
-def drop(actor, o):
+def drop(actor, o, report=True):
     """
     Remove an Object from the actor's inventory and add it to the map
     at the player's coordinates.
@@ -107,30 +110,32 @@ def drop(actor, o):
     actor.inventory.remove(o)
     o.x = actor.x
     o.y = actor.y
-    log.message(actor.name.capitalize() + ' dropped a ' + o.name + '.', libtcod.yellow)
+    if report:
+        log.message(actor.name.capitalize() + ' dropped a ' + o.name + '.', libtcod.yellow)
 
 
-def use(actor, o):
+def use(actor, o, report=True):
     """
     If the object has the Equipment component, toggle equip/dequip.
     Otherwise invoke its use_function and (if not cancelled) destroy it.
     """
     if o.equipment:
-        _toggle_equip(actor, o.equipment)
+        _toggle_equip(actor, o.equipment, report)
         return
 
     if o.item.use_function is None:
-        log.message('The ' + o.name + ' cannot be used.')
+        if report:
+            log.message('The ' + o.name + ' cannot be used.')
     else:
         if o.item.use_function(actor) != 'cancelled':
             actor.inventory.remove(o)
 
 
-def _toggle_equip(actor, eqp):
+def _toggle_equip(actor, eqp, report=True):
     if eqp.is_equipped:
-        dequip(actor, eqp)
+        dequip(actor, eqp, report)
     else:
-        equip(actor, eqp)
+        equip(actor, eqp, report)
 
 
 def equip(actor, eqp, report=True):
@@ -143,18 +148,19 @@ def equip(actor, eqp, report=True):
         dequip(actor, old_equipment)
 
     eqp.is_equipped = True
-    if report is True:
+    if report:
         log.message('Equipped ' + eqp.owner.name + ' on ' + eqp.slot + '.', libtcod.light_green)
 
 
-def dequip(actor, eqp):
+def dequip(actor, eqp, report):
     """
     Dequip the object (and log).
     """
     if not eqp.is_equipped:
         return
     eqp.is_equipped = False
-    log.message('Dequipped ' + eqp.owner.name + ' from ' + eqp.slot + '.', libtcod.light_yellow)
+    if report:
+        log.message('Dequipped ' + eqp.owner.name + ' from ' + eqp.slot + '.', libtcod.light_yellow)
 
 
 def _get_equipped_in_slot(actor, slot):
@@ -166,3 +172,42 @@ def _get_equipped_in_slot(actor, slot):
             if obj.equipment and obj.equipment.slot == slot and obj.equipment.is_equipped:
                 return obj.equipment
     return None
+
+
+class _MockMap(object):
+    def is_blocked_at(self, pos):
+        return False
+
+
+def _test_move():
+    o = Object(algebra.Location(0, 0), 'o', 'test object', libtcod.white)
+    o.current_map = _MockMap()
+    assert o.pos == algebra.Location(0, 0)
+    move(o, algebra.south)
+    assert o.pos == algebra.Location(0, 1)
+    move(o, algebra.southeast)
+    assert o.pos == algebra.Location(1, 2)
+
+
+def _test_move_towards():
+    o = Object(algebra.Location(0, 0), 'o', 'test object', libtcod.white)
+    o.current_map = _MockMap()
+    assert o.pos == algebra.Location(0, 0)
+    move_towards(o, algebra.Location(10, 10))
+    assert o.pos == algebra.Location(1, 1)
+    move_towards(o, algebra.Location(10, 10))
+    assert o.pos == algebra.Location(2, 2)
+    move_towards(o, algebra.Location(-10, 2))
+    assert o.pos == algebra.Location(1, 2)
+    move_towards(o, o.pos)
+    assert o.pos == algebra.Location(1, 2)
+
+
+def _test_actions():
+    _test_move()
+    _test_move_towards()
+
+
+if __name__ == '__main__':
+    _test_actions()
+    print('Action tests complete.')
