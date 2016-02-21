@@ -5,6 +5,7 @@ import config
 import log
 import algebra
 import ui
+import map
 
 
 FOV_ALGO = 0
@@ -388,24 +389,30 @@ def menu(header, options, width):
     return None
 
 
-def _set(con, x, y, color, mode):
-    libtcod.console_set_char_background(con, x, y, color, mode)
-
-
 def _draw_fov_using_terrain(player):
+    """
+    Overly optimized: this code inlines Map.terrain_at(), Map.is_explored(),
+    and ScreenCoords.toWorldCoords() in order to get a 2.5x speedup on
+    large maps.
+    """
     libtcod.console_clear(_con)
     current_map = player.current_map
     pos = algebra.Location(0, 0)
     for screen_y in range(min(current_map.height, config.MAP_PANEL_HEIGHT)):
         pos.set(player.camera_position.x, player.camera_position.y + screen_y)
         for screen_x in range(min(current_map.width, config.MAP_PANEL_WIDTH)):
+            # pos = ScreenCoords.toWorldCoords(player.camera_position, (screen_x, screen_y))
             visible = libtcod.map_is_in_fov(current_map.fov_map, pos.x, pos.y)
-            terrain = current_map.terrain_at(pos)
+            # terrain = current_map.terrain_at(pos)
+            terrain = map.terrain_types[current_map.terrain[pos.x][pos.y]]
             if not visible:
-                if current_map.is_explored(pos):
-                    _set(_con, screen_x, screen_y, terrain.unseen_color, libtcod.BKGND_SET)
+                # if current_map.is_explored(pos):
+                if current_map._explored[pos.x][pos.y]:
+                    libtcod.console_set_char_background(_con, screen_x, screen_y,
+                                                        terrain.unseen_color, libtcod.BKGND_SET)
             else:
-                _set(_con, screen_x, screen_y, terrain.seen_color, libtcod.BKGND_SET)
+                libtcod.console_set_char_background(_con, screen_x, screen_y,
+                                                    terrain.seen_color, libtcod.BKGND_SET)
                 current_map.explore(pos)
             pos.x += 1
 
