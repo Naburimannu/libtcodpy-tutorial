@@ -108,6 +108,7 @@ def pick_up(actor, o, report=True):
             equip(actor, equipment)
         return True
 
+
 def drop(actor, o, report=True):
     """
     Remove an Object from the actor's inventory and add it to the map
@@ -234,9 +235,30 @@ def _test_move_towards():
     assert o.pos == algebra.Location(1, 2)
 
 
+def _test_attack():
+    af = Fighter(100, 0, 10, 0)
+    df = Fighter(100, 0, 0, 0)
+    a = Object(algebra.Location(0, 0), 'a', 'test attacker', libtcod.white, fighter=af)
+    d = Object(algebra.Location(1, 1), 'd', 'test defender', libtcod.white, fighter=df)
+
+    assert af.hp == 100
+    assert df.hp == 100
+    # if defense == 0, full damage is done
+    attack(af, d, False)
+    assert df.hp == 90
+    df.base_defense = 5
+    attack(af, d, False)
+    assert df.hp == 85
+    # if defense > attack, no damage is done
+    df.base_defense = 15
+    attack(af, d, False)
+    assert df.hp == 85
+    
+
 def _test_actions():
     _test_move()
     _test_move_towards()
+    _test_attack()
 
 
 if __name__ == '__main__':
