@@ -90,11 +90,13 @@ def inventory_menu(player, header):
         options = ['Inventory is empty.']
     else:
         options = []
-        for item in player.inventory:
-            text = item.name
+        for obj in player.inventory:
+            text = obj.name
             # Show additional information, in case it's equipped.
-            if item.equipment and item.equipment.is_equipped:
-                text = text + ' (on ' + item.equipment.slot + ')'
+            if obj.item.count > 1:
+                text = text + ' (x' + str(obj.item.count) + ')'
+            if obj.equipment and obj.equipment.is_equipped:
+                text = text + ' (on ' + obj.equipment.slot + ')'
             options.append(text)
 
     index = renderer.menu(header, options, INVENTORY_WIDTH)

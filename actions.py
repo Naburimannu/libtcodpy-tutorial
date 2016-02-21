@@ -81,10 +81,19 @@ def pick_up(actor, o, report=True):
     """
     Add an Object to the actor's inventory and remove from the map.
     """
+    for p in actor.inventory:
+        if o.item.can_combine(p):
+            p.item.count += o.item.count
+            actor.current_map.objects.remove(o)
+            if report:
+                log.message(actor.name.capitalize() + ' picked up a ' + o.name + '!', libtcod.green)
+            return True
+
     if len(actor.inventory) >= 26:
         if report:
             log.message(actor.name.capitalize() + ' inventory is full, cannot pick up ' +
                         o.name + '.', libtcod.red)
+        return False
     else:
         actor.inventory.append(o)
         actor.current_map.objects.remove(o)
@@ -95,7 +104,7 @@ def pick_up(actor, o, report=True):
         equipment = o.equipment
         if equipment and _get_equipped_in_slot(actor, equipment.slot) is None:
             equip(actor, equipment)
-
+        return True
 
 def drop(actor, o, report=True):
     """
@@ -128,7 +137,10 @@ def use(actor, o, report=True):
             log.message('The ' + o.name + ' cannot be used.')
     else:
         if o.item.use_function(actor) != 'cancelled':
-            actor.inventory.remove(o)
+            if o.item.count > 1:
+                o.item.count -= 1
+            else:
+                actor.inventory.remove(o)
 
 
 def _toggle_equip(actor, eqp, report=True):

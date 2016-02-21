@@ -101,8 +101,16 @@ class Item(Component):
     """
     An item that can be picked up and used.
     """
-    def __init__(self, use_function=None):
+    def __init__(self, count=1, use_function=None):
         self.use_function = use_function
+        self.count = count
+
+    def can_combine(self, other):
+        """
+        Returns true if other can stack with self.
+        Terribly simple for now.
+        """
+        return other.item and other.name == self.owner.name
 
 
 class Equipment(Component):
