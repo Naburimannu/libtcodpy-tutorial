@@ -135,10 +135,13 @@ def _place_objects(new_map, room, player):
 
             elif choice == 'sword':
                 equipment_component = Equipment(slot='right hand', power_bonus=3)
-                item = Object(pos, '/', 'sword', libtcod.sky, equipment=equipment_component)
+                item_component = Item(description='A heavy-tipped bronze chopping sword; provides +3 Attack')
+                item = Object(pos, '/', 'sword', libtcod.sky,
+                              item=item_component, equipment=equipment_component)
 
             elif choice == 'shield':
                 equipment_component = Equipment(slot='left hand', defense_bonus=1)
+                item_component = Item(description='A bronze-edged oval shield; provides +1 Defense')
                 item = Object(pos, '[', 'shield', libtcod.darker_orange, equipment=equipment_component)
 
             new_map.objects.insert(0, item)

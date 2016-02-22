@@ -320,8 +320,10 @@ def new_game():
     # True if there's a (hostile) fighter in FOV
     player.endangered = False
 
+    item_component = Item(description='A leaf-shaped bronze knife; provides +2 Attack')
     equipment_component = Equipment(slot='right hand', power_bonus=2)
-    obj = Object(algebra.Location(0, 0), '-', 'dagger', libtcod.sky, equipment=equipment_component)
+    obj = Object(algebra.Location(0, 0), '-', 'dagger', libtcod.sky,
+                 item=item_component, equipment=equipment_component)
     player.inventory.append(obj)
     actions.equip(player, equipment_component, False)
     obj.always_visible = True
