@@ -91,7 +91,7 @@ def pick_up(actor, o, report=True):
                 log.message(actor.name.capitalize() + ' picked up a ' + o.name + '!', libtcod.green)
             return True
 
-    if len(actor.inventory) >= 26:
+    if len(actor.inventory) >= 22:
         if report:
             log.message(actor.name.capitalize() + ' inventory is full, cannot pick up ' +
                         o.name + '.', libtcod.red)
