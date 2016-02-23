@@ -108,12 +108,18 @@ def inventory_menu(player, header):
 
 def display_character_info(player):
     level_up_xp = LEVEL_UP_BASE + player.level * LEVEL_UP_FACTOR
+    base_attack_power = player.fighter.base_power
+    attack_power = player.fighter.power
+    base_defense = player.fighter.base_defense
+    defense = player.fighter.defense
     renderer.msgbox('Character Information\n\nLevel: ' + str(player.level) +
                     '\nExperience: ' + str(player.fighter.xp) +
                     '\nExperience to level up: ' + str(level_up_xp) +
                     '\n\nMaximum HP: ' + str(player.fighter.max_hp) +
-                    '\nAttack: ' + str(player.fighter.power) +
-                    '\nDefense: ' + str(player.fighter.defense),
+                    '\nAttack: ' + str(attack_power) + 
+                    ' (' + str(base_attack_power) + ' + ' + str(attack_power - base_attack_power) + ')'
+                    '\nDefense: ' + str(defense) + 
+                    ' (' + str(base_defense) + ' + ' + str(defense - base_defense) + ')',
                     CHARACTER_SCREEN_WIDTH)
 
 
