@@ -106,7 +106,7 @@ class Item(Component):
     """
     An item that can be picked up and used.
     """
-    def __init__(self, description='', count=1, use_function=None):
+    def __init__(self, description=None, count=1, use_function=None):
         self.description = description
         self.use_function = use_function
         self.count = count
