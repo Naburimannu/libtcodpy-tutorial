@@ -199,33 +199,13 @@ def handle_keys(player):
 
     if player.game_state == 'playing':
         # movement keys
-        if (key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8 or
-                key_char == 'k' or key_char == 'K'):
-            player_move_or_attack(player, algebra.north, key.shift)
-        elif (key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2 or
-              key_char == 'j' or key_char == 'J'):
-            player_move_or_attack(player, algebra.south, key.shift)
-        elif (key.vk == libtcod.KEY_LEFT or key.vk == libtcod.KEY_KP4 or
-              key_char == 'h' or key_char == 'H'):
-            player_move_or_attack(player, algebra.west, key.shift)
-        elif (key.vk == libtcod.KEY_RIGHT or key.vk == libtcod.KEY_KP6 or
-              key_char == 'l' or key_char == 'L'):
-            player_move_or_attack(player, algebra.east, key.shift)
-        elif (key.vk == libtcod.KEY_HOME or key.vk == libtcod.KEY_KP7 or
-              key_char == 'y' or key_char == 'Y'):
-            player_move_or_attack(player, algebra.northwest, key.shift)
-        elif (key.vk == libtcod.KEY_PAGEUP or key.vk == libtcod.KEY_KP9 or
-              key_char == 'u' or key_char == 'U'):
-            player_move_or_attack(player, algebra.northeast, key.shift)
-        elif (key.vk == libtcod.KEY_END or key.vk == libtcod.KEY_KP1 or
-              key_char == 'b' or key_char == 'B'):
-            player_move_or_attack(player, algebra.southwest, key.shift)
-        elif (key.vk == libtcod.KEY_PAGEDOWN or key.vk == libtcod.KEY_KP3 or
-              key_char == 'n' or key_char == 'N'):
-            player_move_or_attack(player, algebra.southeast, key.shift)
-        elif (key.vk == libtcod.KEY_KP5 or key_char == '.'):
-            # do nothing
-            pass
+        (parsed, direction, shift) = interface.parse_move(key)
+        if parsed:
+            if direction:
+                player_move_or_attack(player, direction, shift)
+            else:
+                # Do nothing
+                pass
         else:
             if key_char == 'g':
                 try_pick_up(player)
