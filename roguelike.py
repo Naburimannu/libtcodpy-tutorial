@@ -12,6 +12,7 @@ import log
 import algebra
 from components import *
 import renderer
+import interface
 import actions
 import ai
 import ui
@@ -186,7 +187,7 @@ def handle_keys(player):
         return 'exit'
 
     elif key_char == 'p' and (key.lctrl or key.rctrl):
-        renderer.log_display()
+        interface.log_display()
 
     if player.game_state == 'running':
         if (player.endangered or

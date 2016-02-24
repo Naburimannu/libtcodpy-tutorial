@@ -8,9 +8,8 @@ import libtcodpy as libtcod
 import log
 from components import *
 import actions
-import ui
 import ai
-import renderer
+import interface
 
 HEAL_AMOUNT = 40
 LIGHTNING_DAMAGE = 40
@@ -26,7 +25,7 @@ def _target_monster(actor, max_range=None):
     or None if right-clicked.
     """
     while True:
-        pos = renderer.target_tile(actor, max_range)
+        pos = interface.target_tile(actor, max_range)
         if pos is None:
             return None
 
@@ -84,7 +83,7 @@ def cast_lightning(actor):
 def cast_fireball(actor):
     log.message('Left-click a target tile for the fireball, '
                 'or right-click to cancel.', libtcod.light_cyan)
-    pos = renderer.target_tile(actor)
+    pos = interface.target_tile(actor)
     if pos is None:
         return 'cancelled'
     log.message('The fireball explodes, burning everything within ' +

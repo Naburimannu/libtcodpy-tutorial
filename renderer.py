@@ -4,7 +4,6 @@ import time
 import config
 import log
 import algebra
-import ui
 import map
 
 
@@ -30,6 +29,12 @@ labels, and other metadata.
 """
 _panel = None
 """ UI text data """
+
+
+
+
+_console_center = algebra.Location(config.MAP_PANEL_WIDTH / 2,
+                                   config.MAP_PANEL_HEIGHT / 2)
 
 
 class ScreenCoords(tuple):
@@ -100,68 +105,6 @@ def parse_move(key):
     return (False, None, False)
 
 
-def target_tile(actor, max_range=None):
-    """
-    Return the position of a tile left-clicked in player's FOV
-    (optionally in a range), or (None,None) if right-clicked.
-    """
-    ui.poll()
-    (ox, oy) = (ui.mouse.cx, ui.mouse.cy)
-    using_mouse = False
-    using_keyboard = False
-    (kx, ky) = ScreenCoords.fromWorldCoords(actor.camera_position,
-                                            actor.pos)
-    pos = None
-
-    while True:
-        # Render the screen. This erases the inventory and shows
-        # the names of objects under the mouse.
-        libtcod.console_flush()
-        ui.poll()
-        render_all(actor, (kx, ky))
-        actor.current_map.fov_needs_recompute = False
-        if (ui.mouse.cx != ox or ui.mouse.cy != oy):
-            using_mouse = True
-            using_keyboard = False
-        (key_pressed, direction, shift) = parse_move(ui.key)
-        if key_pressed:
-            using_keyboard = True
-            if using_mouse:
-                (ox, oy) = (ui.mouse.cx, ui.mouse.cy)
-            using_mouse = False
-            if direction:
-                kx += direction.x
-                ky += direction.y
-
-        if using_mouse:
-            (kx, ky) = (ui.mouse.cx, ui.mouse.cy)
-        pos = ScreenCoords.toWorldCoords(actor.camera_position, (kx, ky))
-        libtcod.console_set_default_background(_overlay, libtcod.black)
-        libtcod.console_clear(_overlay)
-        (ux, uy) = ScreenCoords.fromWorldCoords(actor.camera_position,
-                                                actor.pos)
-        libtcod.line_init(ux, uy, kx, ky)
-
-        nx, ny = libtcod.line_step()
-        while ((not (nx is None)) and nx >= 0 and ny >= 0 and
-               nx < config.MAP_PANEL_WIDTH and
-               ny < config.MAP_PANEL_HEIGHT):
-            libtcod.console_set_char_background(_overlay, nx, ny, libtcod.sepia, libtcod.BKGND_SET)
-            nx, ny = libtcod.line_step()
-
-        if ui.mouse.rbutton_pressed or ui.key.vk == libtcod.KEY_ESCAPE:
-            libtcod.console_clear(_overlay)
-            return None
-
-        # Accept the target if the player clicked in FOV
-        # and within the range specified.
-        if ((ui.mouse.lbutton_pressed or ui.key.vk == libtcod.KEY_ENTER) and
-                libtcod.map_is_in_fov(actor.current_map.fov_map, pos.x, pos.y) and
-                (max_range is None or actor.distance(pos) <= max_range)):
-            libtcod.console_clear(_overlay)
-            return pos
-
-
 def msgbox(text, width=50):
     """
     Display a message, wait for any keypress.
@@ -169,14 +112,7 @@ def msgbox(text, width=50):
     menu(text, [], width)
 
 
-def log_display(width=60):
-    """
-    Display the recent log history, wait for any keypress.
-    """
-    colored_text_list(log.game_msgs, width)
-
-
-def _write_log(messages, window, x, initial_y):
+def write_log(messages, window, x, initial_y):
     y = initial_y
     for m in messages:
         libtcod.console_set_default_foreground(window, m.color)
@@ -186,57 +122,6 @@ def _write_log(messages, window, x, initial_y):
         libtcod.console_print_ex(window, x, y, libtcod.BKGND_NONE,
                                  libtcod.LEFT, line)
         y += 1
-
-
-def colored_text_list(lines, width):
-    """
-    Display *lines* of (text, color) in a window of size *width*.
-    Scroll through them if the mouse wheel is spun or the arrows are pressed.
-    """
-    length = len(lines)
-    height = min(length, 40)
-    window = libtcod.console_new(width, height)
-    offset = -height
-
-    while True:
-        if offset > -height:
-            offset = -height
-        if offset < -length:
-            offset = -length
-
-        libtcod.console_clear(window)
-        _write_log(lines[offset:length + offset + height],
-                   window, 0, 0)
-
-        x = config.SCREEN_WIDTH/2 - width/2
-        y = config.SCREEN_HEIGHT/2 - height/2
-        libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
-
-        libtcod.console_flush()
-        while True:
-            ui.poll()
-            (key_pressed, direction, shift) = parse_move(ui.key)
-            if key_pressed:
-                if direction == algebra.north and not shift:
-                    offset -= 1
-                    break
-                elif direction == algebra.south and not shift:
-                    offset += 1
-                    break
-                elif (direction == algebra.northeast or
-                        (direction == algebra.north and shift)):
-                    offset -= height
-                    break
-                elif (direction == algebra.southeast or
-                        (direction == algebra.south and shift)):
-                    offset += height
-                    break
-            elif (ui.key.vk == libtcod.KEY_ALT or
-                  ui.key.vk == libtcod.KEY_CONTROL or
-                  ui.key.vk == libtcod.KEY_SHIFT or
-                  ui.key.vk == libtcod.KEY_NONE):
-                break
-            return
 
 
 def main_menu(new_game, play_game, load_game):
@@ -423,10 +308,6 @@ def _draw_fov_using_terrain(player):
             pos.x += 1
 
 
-_console_center = algebra.Location(config.MAP_PANEL_WIDTH / 2,
-                                   config.MAP_PANEL_HEIGHT / 2)
-
-
 def update_camera(player):
     """
     Makes sure the player is roughly centered and that we're not trying to draw off screen.
@@ -524,7 +405,7 @@ def draw_panel(player, pointer_location):
     libtcod.console_clear(_panel)
 
     # Only display the (log.MSG_HEIGHT) most recent
-    _write_log(log.game_msgs[-log.MSG_HEIGHT:], _panel, MSG_X, 1)
+    write_log(log.game_msgs[-log.MSG_HEIGHT:], _panel, MSG_X, 1)
 
     _render_bar(1, 1, config.BAR_WIDTH, 'HP', player.fighter.hp,
                 player.fighter.max_hp,
