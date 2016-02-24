@@ -30,8 +30,8 @@ LEVEL_UP_FACTOR = 150
 def try_pick_up(player):
     for object in player.current_map.objects:
         if object.x == player.x and object.y == player.y and object.item:
-            actions.pick_up(player, object)
-            break
+            return actions.pick_up(player, object)
+    return False
 
 
 def try_drop(player):
@@ -40,6 +40,8 @@ def try_drop(player):
         'Press the key next to an item to drop it, or any other to cancel.\n')
     if chosen_item is not None:
         actions.drop(player, chosen_item.owner)
+        return True
+    return False
 
 
 def try_use(player):
@@ -48,6 +50,8 @@ def try_use(player):
         'Press the key next to an item to use it, or any other to cancel.\n')
     if chosen_item is not None:
         actions.use(player, chosen_item.owner)
+        return True
+    return False
 
 
 def player_move_or_attack(player, direction, try_running):
