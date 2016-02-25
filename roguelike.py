@@ -176,11 +176,10 @@ def _running_lookahead(player):
     return False
 
 
-def handle_keys(player):
+def handle_keys(player, key):
     """
     Returns 'playing', 'didnt-take-turn', or 'exit'.
     """
-    key = ui.key
     key_char = chr(key.c)
 
     if key.vk == libtcod.KEY_ENTER and key.lalt:
@@ -378,9 +377,8 @@ def play_game(player):
     ui.init()
 
     while not libtcod.console_is_window_closed():
-        ui.poll()
-        renderer.render_all(player, (ui.mouse.cx,
-                                     ui.mouse.cy))
+        (key, mouse) = interface.poll()
+        renderer.render_all(player, (mouse.cx, mouse.cy))
         player.current_map.fov_needs_recompute = False
 
         libtcod.console_flush()
@@ -391,7 +389,7 @@ def play_game(player):
         for object in player.current_map.objects:
             renderer.clear_object(player, object)
 
-        player_action = handle_keys(player)
+        player_action = handle_keys(player, key)
         if player_action == 'exit':
             save_game(player)
             break

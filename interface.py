@@ -7,6 +7,12 @@ import ui
 import renderer
 
 
+def poll():
+    libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS |
+                                libtcod.EVENT_MOUSE, ui.key, ui.mouse)
+    return (ui.key, ui.mouse)
+
+
 def parse_move(key):
     """
     Returns (bool, direction, bool).
@@ -71,8 +77,8 @@ def _colored_text_list(lines, width):
 
         libtcod.console_flush()
         while True:
-            ui.poll()
-            (key_pressed, direction, shift) = _parse_move(ui.key)
+            (key, mouse) = poll()
+            (key_pressed, direction, shift) = parse_move(key)
             if key_pressed:
                 if direction == algebra.north and not shift:
                     offset -= 1
@@ -88,10 +94,10 @@ def _colored_text_list(lines, width):
                         (direction == algebra.south and shift)):
                     offset += height
                     break
-            elif (ui.key.vk == libtcod.KEY_ALT or
-                  ui.key.vk == libtcod.KEY_CONTROL or
-                  ui.key.vk == libtcod.KEY_SHIFT or
-                  ui.key.vk == libtcod.KEY_NONE):
+            elif (key.vk == libtcod.KEY_ALT or
+                  key.vk == libtcod.KEY_CONTROL or
+                  key.vk == libtcod.KEY_SHIFT or
+                  key.vk == libtcod.KEY_NONE):
                 break
             return
 
@@ -107,7 +113,7 @@ def target_tile(actor, max_range=None):
     Return the position of a tile left-clicked in player's FOV
     (optionally in a range), or (None,None) if right-clicked.
     """
-    ui.poll()
+    (key, mouse) = poll()
     (ox, oy) = (ui.mouse.cx, ui.mouse.cy)
     using_mouse = False
     using_keyboard = False
@@ -119,24 +125,24 @@ def target_tile(actor, max_range=None):
         # Render the screen. This erases the inventory and shows
         # the names of objects under the mouse.
         libtcod.console_flush()
-        ui.poll()
+        (key, mouse) = poll()
         renderer.render_all(actor, (kx, ky))
         actor.current_map.fov_needs_recompute = False
-        if (ui.mouse.cx != ox or ui.mouse.cy != oy):
+        if (mouse.cx != ox or mouse.cy != oy):
             using_mouse = True
             using_keyboard = False
-        (key_pressed, direction, shift) = _parse_move(ui.key)
+        (key_pressed, direction, shift) = _parse_move(key)
         if key_pressed:
             using_keyboard = True
             if using_mouse:
-                (ox, oy) = (ui.mouse.cx, ui.mouse.cy)
+                (ox, oy) = (mouse.cx, mouse.cy)
             using_mouse = False
             if direction:
                 kx += direction.x
                 ky += direction.y
 
         if using_mouse:
-            (kx, ky) = (ui.mouse.cx, ui.mouse.cy)
+            (kx, ky) = (mouse.cx, mouse.cy)
         pos = renderer.ScreenCoords.toWorldCoords(actor.camera_position, (kx, ky))
         libtcod.console_set_default_background(renderer.overlay, libtcod.black)
         libtcod.console_clear(renderer.overlay)
@@ -151,13 +157,13 @@ def target_tile(actor, max_range=None):
             libtcod.console_set_char_background(renderer.overlay, nx, ny, libtcod.sepia, libtcod.BKGND_SET)
             nx, ny = libtcod.line_step()
 
-        if ui.mouse.rbutton_pressed or ui.key.vk == libtcod.KEY_ESCAPE:
+        if mouse.rbutton_pressed or key.vk == libtcod.KEY_ESCAPE:
             libtcod.console_clear(renderer.overlay)
             return None
 
         # Accept the target if the player clicked in FOV
         # and within the range specified.
-        if ((ui.mouse.lbutton_pressed or ui.key.vk == libtcod.KEY_ENTER) and
+        if ((mouse.lbutton_pressed or key.vk == libtcod.KEY_ENTER) and
                 libtcod.map_is_in_fov(actor.current_map.fov_map, pos.x, pos.y) and
                 (max_range is None or actor.distance(pos) <= max_range)):
             libtcod.console_clear(renderer.overlay)
