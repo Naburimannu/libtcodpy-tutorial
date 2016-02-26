@@ -23,6 +23,13 @@ def poll():
     return (key, mouse)
 
 
+def debounce():
+    key = libtcod.Key()
+    mouse = libtcod.Mouse()
+    # Can't pass None for mouse even if we are only waiting for a key release.
+    libtcod.sys_wait_for_event(libtcod.EVENT_KEY_RELEASE, key, mouse, True)
+
+
 def parse_move(key):
     """
     Returns (bool, direction, bool).

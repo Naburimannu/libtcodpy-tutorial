@@ -212,8 +212,10 @@ def handle_keys(player, key):
             if key_char == 'g':
                 try_pick_up(player)
             if key_char == 'i':
+                # interface.debounce()
                 try_use(player)
             if key_char == 'd':
+                # interface.debounce()
                 try_drop(player)
             if key_char == 'c':
                 display_character_info(player)
