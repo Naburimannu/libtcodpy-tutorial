@@ -103,7 +103,7 @@ def inventory_menu(player, header):
                 text = text + ' (on ' + obj.equipment.slot + ')'
             options.append(text)
 
-    index = renderer.menu(header, options, INVENTORY_WIDTH)
+    (char, index) = renderer.menu(header, options, INVENTORY_WIDTH)
 
     if index is None or len(player.inventory) == 0:
         return None
@@ -239,7 +239,7 @@ def check_level_up(player):
 
         choice = None
         while choice is None:
-            choice = renderer.menu(
+            (char, choice) = renderer.menu(
                 'Level up! Choose a stat to raise:\n',
                 ['Constitution (+20 HP, from ' + str(player.fighter.max_hp) + ')',
                  'Strength (+1 attack, from ' + str(player.fighter.power) + ')',

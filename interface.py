@@ -132,7 +132,7 @@ def target_tile(actor, max_range=None):
     (optionally in a range), or (None,None) if right-clicked.
     """
     (key, mouse) = poll()
-    (ox, oy) = (ui.mouse.cx, ui.mouse.cy)
+    (ox, oy) = (mouse.cx, mouse.cy)
     using_mouse = False
     using_keyboard = False
     (kx, ky) = renderer.ScreenCoords.fromWorldCoords(actor.camera_position,

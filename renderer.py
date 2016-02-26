@@ -143,7 +143,7 @@ def main_menu(new_game, play_game, load_game):
             0, config.SCREEN_WIDTH/2, config.SCREEN_HEIGHT-2, libtcod.BKGND_NONE,
             libtcod.CENTER, 'By Jotaf')
 
-        choice = menu('', ['Play a new game', 'Continue last game', 'Quit'], 24)
+        (char, choice) = menu('', ['Play a new game', 'Continue last game', 'Quit'], 24)
 
         if choice == 0:
             play_game(new_game())
@@ -237,7 +237,7 @@ def clear_object(player, o):
 
 def menu(header, options, width):
     """
-    Display a menu of options headed by letters; return the index [0, 25] of the selection, or None.
+    Display a menu of options headed by letters; return (the key pressed, the index [0, 25] of the selection, or None).
     """
     global _con
     if len(options) > 26:
@@ -276,8 +276,8 @@ def menu(header, options, width):
 
     index = key.c - ord('a')
     if index >= 0 and index < len(options):
-        return index
-    return None
+        return (key.c, index)
+    return (key.c, None)
 
 
 def _draw_fov_using_terrain(player):
