@@ -15,7 +15,6 @@ import renderer
 import interface
 import actions
 import ai
-import ui
 import cartographer
 
 INVENTORY_WIDTH = 50
@@ -373,8 +372,6 @@ def play_game(player):
     Main loop.
     """
     player_action = None
-
-    ui.init()
 
     while not libtcod.console_is_window_closed():
         (key, mouse) = interface.poll()

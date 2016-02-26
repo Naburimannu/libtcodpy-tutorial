@@ -1,16 +1,26 @@
+"""
+All functions that take input (other than the game mainloop).
+
+interface.poll() returns (libtcod.Key, libtcod.Mouse) with key *presses*
+  and mouse events, but not key *releases*.
+interface.parse_move(key) translates a libtcod.Key into directional movement.
+interface.log_display(width=60)
+interface.target_tile(actor, max_range=None)
+"""
 import libtcodpy as libtcod
 
 import config
 import algebra
 import log
-import ui
 import renderer
 
 
 def poll():
+    key = libtcod.Key()
+    mouse = libtcod.Mouse()
     libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS |
-                                libtcod.EVENT_MOUSE, ui.key, ui.mouse)
-    return (ui.key, ui.mouse)
+                                libtcod.EVENT_MOUSE, key, mouse)
+    return (key, mouse)
 
 
 def parse_move(key):
@@ -100,6 +110,7 @@ def _colored_text_list(lines, width):
                   key.vk == libtcod.KEY_NONE):
                 break
             return
+
 
 def log_display(width=60):
     """
