@@ -9,17 +9,17 @@ This refactoring starts with the same code and divides it up into 12 smaller fil
 1. roguelike: main menu, mainloop, load and save, player actions
 2. cartographer: map generation
 3. spells and targeting functions
-4. ai
-5. actions: movement and combat (implementations shared between player and monsters)
-6. renderer
-7. ui
+4. interface
+5. ai
+6. actions: movement and combat (implementations shared between player and monsters)
+7. renderer
 8. components: Object, Fighter, Item, Equipment, AI
 9. map
 10. algebra: Rect, Location, Direction
 11. log
 12. config
 
-Most of the global variables have been eliminated; modules export ui.key, ui.mouse, and log.game_msgs, while renderer uses a few internally.
+Most of the global variables have been eliminated; modules export renderer.overay and log.game_msgs, while renderer also uses a few "globals" internally.
 At the git tag 'basic-refactoring', the only other significant change should be:
 * Get rid of the Tile class for a 2x reduction in filesize and 2x speedup in load/save.
 
@@ -31,4 +31,6 @@ Subsequently implemented externally-visible features include:
 * Running with shift-move until reaching an object, a change in architecture, or spotting a monster.
 * Targeting with keyboard as well as mouse.
 * Help screen on ? or F1.
-* ~2x speedup drawing large maps (from 6-7 fps to 10-13 fps for 200x200).
+* ~2.5x speedup drawing large maps (from 6-7 fps to 15-17 fps for 200x200).
+* Stackable objects
+
