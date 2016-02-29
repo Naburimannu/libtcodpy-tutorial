@@ -38,6 +38,10 @@ _console_center = algebra.Location(config.MAP_PANEL_WIDTH / 2,
 
 
 def block_for_key():
+    """
+    Approximately replacing libtcod.console_wait_for_keypress(),
+    returns a libtcod.Key object.
+    """
     key = libtcod.Key()
     mouse = libtcod.Mouse()
     while True:
@@ -57,6 +61,9 @@ def block_for_key():
 class ScreenCoords(tuple):
     @staticmethod
     def fromWorldCoords(camera_coords, world_coords):
+        """
+        Returns (None, None) if the specified world coordinates would be off-screen.
+        """
         x = world_coords.x - camera_coords.x
         y = world_coords.y - camera_coords.y
         if (x < 0 or y < 0 or x >= config.MAP_PANEL_WIDTH or y >= config.MAP_PANEL_HEIGHT):
@@ -197,6 +204,10 @@ def _render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
 
 
 def _describe_obj(obj):
+    """
+    Prints the name of the object, and any qualifiers.
+    - if an item with count > 1, appends the count
+    """
     if obj.item and obj.item.count > 1:
         return obj.name + ' (x' + str(obj.item.count) + ')'
     else:
@@ -220,8 +231,6 @@ def _get_names_under_mouse(player, (sx, sy)):
     names = [_describe_obj(obj) for obj in objects
              if obj.pos == pos and
              libtcod.map_is_in_fov(fov_map, obj.x, obj.y)]
-    # print('mouse ' + str(sx) + ', ' + str(sy) + ' = ' +
-    #       str(pos.x) + ', ' + str(pos.y))
     if player.current_map.terrain_at(pos).display_name:
         names.append(player.current_map.terrain_at(pos).display_name)
 
@@ -230,18 +239,11 @@ def _get_names_under_mouse(player, (sx, sy)):
 
 
 def _draw_object(player, o):
-    # Show if it's visible to the player
-    # or it's set to "always visible" and on an explored tile.
     global _con
-    if (libtcod.map_is_in_fov(player.current_map.fov_map, o.x, o.y) or
-            (o.always_visible and
-             player.current_map.is_explored(o.pos))):
-        libtcod.console_set_default_foreground(_con, o.color)
-        (x, y) = ScreenCoords.fromWorldCoords(player.camera_position, o.pos)
-        libtcod.console_put_char(_con, x, y, o.char, libtcod.BKGND_NONE)
-        if o.fighter and o != player:
-            player.endangered = True
-
+    libtcod.console_set_default_foreground(_con, o.color)
+    (x, y) = ScreenCoords.fromWorldCoords(player.camera_position, o.pos)
+    libtcod.console_put_char(_con, x, y, o.char, libtcod.BKGND_NONE)
+ 
 
 def clear_object(player, o):
     """
@@ -286,7 +288,6 @@ def menu(header, options, width):
 
     libtcod.console_flush()
     while True:
-        # key = libtcod.console_wait_for_keypress(True)
         key = block_for_key()
         if not (key.vk == libtcod.KEY_ALT or key.vk == libtcod.KEY_CONTROL or
                 key.vk == libtcod.KEY_SHIFT):
@@ -404,11 +405,8 @@ def draw_console(player):
     # always appear over all other objects, so it's drawn later.
     # (Could also achieve this by guaranteeing the player is always
     # the last object in current_map.objects.)
-    # If we spot a monster while drawing, set endangered to True.
-    player.endangered = False
-    for object in current_map.objects:
-        if object != player:
-            _draw_object(player, object)
+    for object in player.visible_objects:
+        _draw_object(player, object)
     _draw_object(player, player)
 
     libtcod.console_blit(_con, 0, 0, config.MAP_PANEL_WIDTH,

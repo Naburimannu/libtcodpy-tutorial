@@ -377,6 +377,26 @@ def revisit_level(player, portal):
     renderer.clear_console()
 
 
+def process_visible_objects(player):
+    """
+    We will show the object if it's visible to the player
+    or it's set to "always visible" and on an explored tile.
+    If we're showing a hostile monster, set player.endangered.
+    """
+    player.endangered = False
+    visible_objects = []
+    for o in player.current_map.objects:
+        if o == player:
+            continue
+        if (libtcod.map_is_in_fov(player.current_map.fov_map, o.x, o.y) or
+                (o.always_visible and
+                 player.current_map.is_explored(o.pos))):
+            visible_objects.append(o)
+            if o.fighter:
+                player.endangered = True
+    return visible_objects
+
+
 def play_game(player):
     """
     Main loop.
@@ -385,6 +405,7 @@ def play_game(player):
 
     while not libtcod.console_is_window_closed():
         (key, mouse) = interface.poll()
+        player.visible_objects = process_visible_objects(player)
         renderer.render_all(player, (mouse.cx, mouse.cy))
         player.current_map.fov_needs_recompute = False
 
