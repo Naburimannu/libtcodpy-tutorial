@@ -37,6 +37,23 @@ _console_center = algebra.Location(config.MAP_PANEL_WIDTH / 2,
                                    config.MAP_PANEL_HEIGHT / 2)
 
 
+def block_for_key():
+    key = libtcod.Key()
+    mouse = libtcod.Mouse()
+    while True:
+        libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS, key, mouse)
+        if (key.vk == libtcod.KEY_NONE):
+            continue
+
+        if (key.vk == libtcod.KEY_ALT or
+                key.vk == libtcod.KEY_SHIFT or
+                key.vk == libtcod.KEY_CONTROL):
+            continue
+
+        break
+    return key
+
+
 class ScreenCoords(tuple):
     @staticmethod
     def fromWorldCoords(camera_coords, world_coords):
@@ -269,7 +286,8 @@ def menu(header, options, width):
 
     libtcod.console_flush()
     while True:
-        key = libtcod.console_wait_for_keypress(True)
+        # key = libtcod.console_wait_for_keypress(True)
+        key = block_for_key()
         if not (key.vk == libtcod.KEY_ALT or key.vk == libtcod.KEY_CONTROL or
                 key.vk == libtcod.KEY_SHIFT):
             break
