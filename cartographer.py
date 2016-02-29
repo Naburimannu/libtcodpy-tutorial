@@ -118,19 +118,25 @@ def _place_objects(new_map, room, player):
         if not new_map.is_blocked_at(pos):
             choice = _random_choice(item_chances)
             if choice == 'heal':
-                item_component = Item(use_function=spells.cast_heal)
+                item_component = Item(use_function=spells.cast_heal,
+                    description='A flask of revivifying alchemical mixtures; heals ' + str(spells.HEAL_AMOUNT) + ' hp.')
                 item = Object(pos, '!', 'healing potion', libtcod.violet, item=item_component)
 
             elif choice == 'lightning':
-                item_component = Item(use_function=spells.cast_lightning)
+                item_component = Item(use_function=spells.cast_lightning,
+                    description='Reading these runes will strike your nearest foe with lightning for ' +
+                        str(spells.LIGHTNING_DAMAGE) + ' hp.')
                 item = Object(pos, '#', 'scroll of lightning bolt', libtcod.light_yellow, item=item_component)
 
             elif choice == 'fireball':
-                item_component = Item(use_function=spells.cast_fireball)
+                item_component = Item(use_function=spells.cast_fireball,
+                    description='Reading these runes will cause a burst of flame inflicting ' + str(spells.FIREBALL_DAMAGE) +
+                        ' hp on nearby creatures.')
                 item = Object(pos, '#', 'scroll of fireball', libtcod.light_yellow, item=item_component)
 
             elif choice == 'confuse':
-                item_component = Item(use_function=spells.cast_confuse)
+                item_component = Item(use_function=spells.cast_confuse,
+                    description='Reading these runes will confuse the creature you focus on for a short time.')
                 item = Object(pos, '#', 'scroll of confusion', libtcod.light_yellow, item=item_component)
 
             elif choice == 'sword':

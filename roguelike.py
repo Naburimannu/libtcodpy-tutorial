@@ -36,7 +36,7 @@ def try_pick_up(player):
 def try_drop(player):
     chosen_item = inventory_menu(
         player,
-        'Press the key next to an item to drop it, or any other to cancel.\n')
+        'Press the key next to an item to drop it, x to examine, or any other to cancel.\n')
     if chosen_item is not None:
         actions.drop(player, chosen_item.owner)
         return True
@@ -46,7 +46,7 @@ def try_drop(player):
 def try_use(player):
     chosen_item = inventory_menu(
         player,
-        'Press the key next to an item to use it, or any other to cancel.\n')
+        'Press the key next to an item to use it, x to examine, or any other to cancel.\n')
     if chosen_item is not None:
         actions.use(player, chosen_item.owner)
         return True
@@ -91,23 +91,31 @@ def inventory_menu(player, header):
     Show a menu with each item of the inventory as an option.
     """
     if len(player.inventory) == 0:
-        options = ['Inventory is empty.']
-    else:
-        options = []
-        for obj in player.inventory:
-            text = obj.name
-            # Show additional information, in case it's equipped.
-            if obj.item.count > 1:
-                text = text + ' (x' + str(obj.item.count) + ')'
-            if obj.equipment and obj.equipment.is_equipped:
-                text = text + ' (on ' + obj.equipment.slot + ')'
-            options.append(text)
+        renderer.menu(header, 'Inventory is empty.', INVENTORY_WIDTH)
+        return None
+
+    options = []
+    for obj in player.inventory:
+        text = obj.name
+        # Show additional information, in case it's equipped.
+        if obj.item.count > 1:
+            text = text + ' (x' + str(obj.item.count) + ')'
+        if obj.equipment and obj.equipment.is_equipped:
+            text = text + ' (on ' + obj.equipment.slot + ')'
+        options.append(text)
 
     (char, index) = renderer.menu(header, options, INVENTORY_WIDTH)
 
-    if index is None or len(player.inventory) == 0:
-        return None
-    return player.inventory[index].item
+    if index is not None:
+        return player.inventory[index].item
+
+    if char == ord('x'):
+        (c2, i2) = renderer.menu('Press the key next to an item to examine it, or any other to cancel.\n', options, INVENTORY_WIDTH)
+        if i2 is not None and player.inventory[i2].item.description is not None:
+            # renderer.msgbox(player.inventory[i2].item.description)
+            log.message(player.inventory[i2].item.description)
+
+    return None
 
 
 def display_character_info(player):
