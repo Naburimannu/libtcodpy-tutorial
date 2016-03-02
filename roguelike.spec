@@ -1,5 +1,10 @@
 # -*- mode: python -*-
 
+# Attempts to configure PyInstaller for roguelike
+# libtcodpy *conditionally* imports numpy, but PyInstaller
+# can't seem to deal with that conditionality and makes it a
+# hard requirement.
+
 block_cipher = None
 
 fonts = [('arial12x12.png', '.')]

@@ -149,7 +149,7 @@ def target_tile(actor, max_range=None):
         if (mouse.cx != ox or mouse.cy != oy):
             using_mouse = True
             using_keyboard = False
-        (key_pressed, direction, shift) = _parse_move(key)
+        (key_pressed, direction, shift) = parse_move(key)
         if key_pressed:
             using_keyboard = True
             if using_mouse:
@@ -162,8 +162,8 @@ def target_tile(actor, max_range=None):
         if using_mouse:
             (kx, ky) = (mouse.cx, mouse.cy)
         pos = renderer.ScreenCoords.toWorldCoords(actor.camera_position, (kx, ky))
-        libtcod.console_set_default_background(renderer.overlay, libtcod.black)
-        libtcod.console_clear(renderer.overlay)
+        libtcod.console_set_default_background(renderer._overlay, libtcod.black)
+        libtcod.console_clear(renderer._overlay)
         (ux, uy) = renderer.ScreenCoords.fromWorldCoords(actor.camera_position,
                                                          actor.pos)
         libtcod.line_init(ux, uy, kx, ky)
@@ -172,11 +172,11 @@ def target_tile(actor, max_range=None):
         while ((not (nx is None)) and nx >= 0 and ny >= 0 and
                nx < config.MAP_PANEL_WIDTH and
                ny < config.MAP_PANEL_HEIGHT):
-            libtcod.console_set_char_background(renderer.overlay, nx, ny, libtcod.sepia, libtcod.BKGND_SET)
+            libtcod.console_set_char_background(renderer._overlay, nx, ny, libtcod.sepia, libtcod.BKGND_SET)
             nx, ny = libtcod.line_step()
 
         if mouse.rbutton_pressed or key.vk == libtcod.KEY_ESCAPE:
-            libtcod.console_clear(renderer.overlay)
+            libtcod.console_clear(renderer._overlay)
             return None
 
         # Accept the target if the player clicked in FOV
@@ -184,5 +184,5 @@ def target_tile(actor, max_range=None):
         if ((mouse.lbutton_pressed or key.vk == libtcod.KEY_ENTER) and
                 libtcod.map_is_in_fov(actor.current_map.fov_map, pos.x, pos.y) and
                 (max_range is None or actor.distance(pos) <= max_range)):
-            libtcod.console_clear(renderer.overlay)
+            libtcod.console_clear(renderer._overlay)
             return pos
