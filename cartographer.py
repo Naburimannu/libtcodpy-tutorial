@@ -6,6 +6,7 @@ import map
 from components import *
 import ai
 import spells
+import miscellany
 
 ROOM_MAX_SIZE = 10
 ROOM_MIN_SIZE = 6
@@ -71,6 +72,15 @@ def _from_dungeon_level(new_map, table):
     return 0
 
 
+loot_values = {
+    'heal' : miscellany.healing_potion,
+    'lightning' : miscellany.lightning_scroll,
+    'fireball' : miscellany.fireball_scroll,
+    'confuse' : miscellany.confusion_scroll,
+    'sword' : miscellany.sword,
+    'shield' : miscellany.shield
+}
+
 def _place_objects(new_map, room, player):
     max_monsters = _from_dungeon_level(new_map, [[2, 1], [3, 4], [5, 6]])
 
@@ -117,38 +127,7 @@ def _place_objects(new_map, room, player):
 
         if not new_map.is_blocked_at(pos):
             choice = _random_choice(item_chances)
-            if choice == 'heal':
-                item_component = Item(use_function=spells.cast_heal,
-                    description='A flask of revivifying alchemical mixtures; heals ' + str(spells.HEAL_AMOUNT) + ' hp.')
-                item = Object(pos, '!', 'healing potion', libtcod.violet, item=item_component)
-
-            elif choice == 'lightning':
-                item_component = Item(use_function=spells.cast_lightning,
-                    description='Reading these runes will strike your nearest foe with lightning for ' +
-                        str(spells.LIGHTNING_DAMAGE) + ' hp.')
-                item = Object(pos, '#', 'scroll of lightning bolt', libtcod.light_yellow, item=item_component)
-
-            elif choice == 'fireball':
-                item_component = Item(use_function=spells.cast_fireball,
-                    description='Reading these runes will cause a burst of flame inflicting ' + str(spells.FIREBALL_DAMAGE) +
-                        ' hp on nearby creatures.')
-                item = Object(pos, '#', 'scroll of fireball', libtcod.light_yellow, item=item_component)
-
-            elif choice == 'confuse':
-                item_component = Item(use_function=spells.cast_confuse,
-                    description='Reading these runes will confuse the creature you focus on for a short time.')
-                item = Object(pos, '#', 'scroll of confusion', libtcod.light_yellow, item=item_component)
-
-            elif choice == 'sword':
-                equipment_component = Equipment(slot='right hand', power_bonus=3)
-                item_component = Item(description='A heavy-tipped bronze chopping sword; provides +3 Attack')
-                item = Object(pos, '/', 'sword', libtcod.sky,
-                              item=item_component, equipment=equipment_component)
-
-            elif choice == 'shield':
-                equipment_component = Equipment(slot='left hand', defense_bonus=1)
-                item_component = Item(description='A bronze-edged oval shield; provides +1 Defense')
-                item = Object(pos, '[', 'shield', libtcod.darker_orange, equipment=equipment_component)
+            item = loot_values[choice](pos=pos)
 
             new_map.objects.insert(0, item)
             item.always_visible = True  # Items are visible even out-of-FOV, if in an explored area
